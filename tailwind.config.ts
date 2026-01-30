@@ -57,6 +57,15 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        salon: {
+          slate: "hsl(var(--salon-slate))",
+          "slate-light": "hsl(var(--salon-slate-light))",
+          champagne: "hsl(var(--salon-champagne))",
+          "champagne-light": "hsl(var(--salon-champagne-light))",
+          "champagne-dark": "hsl(var(--salon-champagne-dark))",
+          silver: "hsl(var(--salon-silver))",
+          cream: "hsl(var(--salon-cream))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
