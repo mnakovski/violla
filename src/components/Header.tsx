@@ -2,19 +2,32 @@ import viollaLogo from "@/assets/violla-logo.jpg";
 
 const Header = () => {
   return (
-    <header className="salon-header px-4 py-6 text-center">
-      <div className="flex items-center justify-center gap-3">
+    <header className="salon-header px-4 py-8 text-center relative overflow-hidden">
+      {/* Watermark logo */}
+      <div 
+        className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        aria-hidden="true"
+      >
         <img 
           src={viollaLogo} 
-          alt="Violla Salon" 
-          className="w-14 h-14 rounded-full object-cover border-2 border-salon-champagne/50"
+          alt="" 
+          className="w-48 h-48 object-cover opacity-10 blur-[1px]"
+        />
+      </div>
+      
+      {/* Main header content */}
+      <div className="relative z-10 flex items-center justify-center gap-3">
+        <img 
+          src={viollaLogo} 
+          alt="Violla Салон" 
+          className="w-16 h-16 rounded-full object-cover border-2 border-accent/60 shadow-lg"
         />
         <div className="text-left">
-          <h1 className="text-2xl font-semibold text-primary-foreground tracking-wide">
+          <h1 className="text-3xl font-semibold text-foreground tracking-wide">
             Violla
           </h1>
-          <p className="text-sm text-salon-champagne-light opacity-90">
-            Beauty Salon
+          <p className="text-sm text-accent opacity-90">
+            Салон за убавина
           </p>
         </div>
       </div>

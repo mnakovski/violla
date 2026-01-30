@@ -58,8 +58,8 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
         salon: {
-          slate: "hsl(var(--salon-slate))",
-          "slate-light": "hsl(var(--salon-slate-light))",
+          dark: "hsl(var(--salon-dark))",
+          charcoal: "hsl(var(--salon-charcoal))",
           champagne: "hsl(var(--salon-champagne))",
           "champagne-light": "hsl(var(--salon-champagne-light))",
           "champagne-dark": "hsl(var(--salon-champagne-dark))",

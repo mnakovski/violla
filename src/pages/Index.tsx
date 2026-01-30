@@ -17,7 +17,7 @@ const Index = () => {
         {/* Service Selection */}
         <section>
           <h2 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
-            Select Service
+            Избери услуга
           </h2>
           <ServiceTabs 
             activeService={activeService} 
@@ -28,7 +28,7 @@ const Index = () => {
         {/* Date Selection */}
         <section>
           <h2 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
-            Select Date
+            Избери датум
           </h2>
           <DatePicker 
             selectedDate={selectedDate} 

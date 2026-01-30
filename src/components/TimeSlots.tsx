@@ -37,10 +37,10 @@ const TimeSlots = ({ selectedDate, activeService }: TimeSlotsProps) => {
       <div className="salon-card p-8 text-center">
         <div className="text-4xl mb-3">🌙</div>
         <h3 className="text-lg font-semibold text-foreground mb-1">
-          We're closed on Sundays
+          Неработен ден
         </h3>
         <p className="text-sm text-muted-foreground">
-          Please select another day to view availability
+          Ве молиме изберете друг ден
         </p>
       </div>
     );
@@ -52,16 +52,16 @@ const TimeSlots = ({ selectedDate, activeService }: TimeSlotsProps) => {
     <div className="salon-card p-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-foreground">
-          Available Times
+          Достапни термини
         </h3>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 rounded-full bg-accent/80"></div>
-            <span>Available</span>
+            <span>Слободно</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 rounded-full bg-muted"></div>
-            <span>Busy</span>
+            <span>Зафатено</span>
           </div>
         </div>
       </div>
@@ -80,7 +80,7 @@ const TimeSlots = ({ selectedDate, activeService }: TimeSlotsProps) => {
       </div>
 
       <p className="mt-4 text-xs text-center text-muted-foreground">
-        Contact us to book your appointment
+        Контактирајте нè за да закажете термин
       </p>
     </div>
   );
