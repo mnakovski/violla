@@ -8,70 +8,70 @@
 
 @layer base {
   :root {
-    /* Deep slate blue - primary brand color */
-    --background: 200 25% 96%;
-    --foreground: 200 35% 20%;
+    /* Dark theme - Deep charcoal with champagne gold accents */
+    --background: 220 15% 10%;
+    --foreground: 40 20% 90%;
 
-    /* Cards - slightly darker than background */
-    --card: 200 20% 98%;
-    --card-foreground: 200 35% 20%;
+    /* Cards - slightly lighter than background */
+    --card: 220 15% 14%;
+    --card-foreground: 40 20% 90%;
 
     /* Popover */
-    --popover: 0 0% 100%;
-    --popover-foreground: 200 35% 20%;
+    --popover: 220 15% 12%;
+    --popover-foreground: 40 20% 90%;
 
-    /* Primary - Deep slate blue */
-    --primary: 200 35% 28%;
-    --primary-foreground: 38 45% 88%;
+    /* Primary - Champagne gold */
+    --primary: 38 45% 55%;
+    --primary-foreground: 220 15% 10%;
 
-    /* Secondary - Light slate */
-    --secondary: 200 20% 92%;
-    --secondary-foreground: 200 35% 28%;
+    /* Secondary - Dark slate */
+    --secondary: 220 12% 18%;
+    --secondary-foreground: 40 20% 85%;
 
     /* Muted */
-    --muted: 200 15% 90%;
-    --muted-foreground: 200 20% 50%;
+    --muted: 220 10% 20%;
+    --muted-foreground: 220 10% 55%;
 
     /* Accent - Champagne gold */
-    --accent: 38 45% 60%;
-    --accent-foreground: 200 35% 20%;
+    --accent: 38 45% 55%;
+    --accent-foreground: 220 15% 10%;
 
     /* Destructive */
-    --destructive: 0 84% 60%;
+    --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders - Silver */
-    --border: 200 20% 85%;
-    --input: 200 20% 88%;
-    --ring: 38 45% 60%;
+    /* Borders - Dark silver */
+    --border: 220 10% 22%;
+    --input: 220 12% 20%;
+    --ring: 38 45% 55%;
 
     --radius: 0.75rem;
 
     /* Custom salon tokens */
-    --salon-slate: 200 35% 28%;
-    --salon-slate-light: 200 25% 40%;
-    --salon-champagne: 38 45% 60%;
-    --salon-champagne-light: 38 50% 75%;
-    --salon-champagne-dark: 38 40% 45%;
-    --salon-silver: 200 15% 75%;
-    --salon-cream: 40 30% 96%;
+    --salon-dark: 220 15% 8%;
+    --salon-charcoal: 220 15% 14%;
+    --salon-champagne: 38 45% 55%;
+    --salon-champagne-light: 38 50% 70%;
+    --salon-champagne-dark: 38 40% 40%;
+    --salon-silver: 220 10% 45%;
+    --salon-cream: 40 30% 90%;
 
     /* Gradients */
-    --gradient-header: linear-gradient(180deg, hsl(200 35% 28%) 0%, hsl(200 30% 35%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(38 45% 60%) 0%, hsl(38 50% 70%) 100%);
+    --gradient-header: linear-gradient(180deg, hsl(220 15% 8%) 0%, hsl(220 15% 12%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(38 45% 55%) 0%, hsl(38 50% 65%) 100%);
 
     /* Shadows */
-    --shadow-soft: 0 4px 20px -4px hsl(200 35% 28% / 0.15);
-    --shadow-card: 0 2px 12px -2px hsl(200 35% 28% / 0.1);
+    --shadow-soft: 0 4px 20px -4px hsl(0 0% 0% / 0.4);
+    --shadow-card: 0 2px 12px -2px hsl(0 0% 0% / 0.3);
 
-    --sidebar-background: 200 25% 96%;
-    --sidebar-foreground: 200 35% 20%;
-    --sidebar-primary: 200 35% 28%;
-    --sidebar-primary-foreground: 38 45% 88%;
-    --sidebar-accent: 200 20% 92%;
-    --sidebar-accent-foreground: 200 35% 28%;
-    --sidebar-border: 200 20% 85%;
-    --sidebar-ring: 38 45% 60%;
+    --sidebar-background: 220 15% 10%;
+    --sidebar-foreground: 40 20% 90%;
+    --sidebar-primary: 38 45% 55%;
+    --sidebar-primary-foreground: 220 15% 10%;
+    --sidebar-accent: 220 12% 18%;
+    --sidebar-accent-foreground: 40 20% 85%;
+    --sidebar-border: 220 10% 22%;
+    --sidebar-ring: 38 45% 55%;
   }
 }
 

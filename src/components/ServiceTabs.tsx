@@ -6,10 +6,10 @@ interface ServiceTabsProps {
 }
 
 const services = [
-  { id: "hair", label: "Hair", icon: Scissors },
-  { id: "nails", label: "Nails", icon: Sparkles },
-  { id: "waxing", label: "Waxing", icon: Heart },
-  { id: "eyebrows", label: "Eyebrows", icon: Eye },
+  { id: "hair", label: "Коса", icon: Scissors },
+  { id: "nails", label: "Нокти", icon: Sparkles },
+  { id: "waxing", label: "Депилација", icon: Heart },
+  { id: "eyebrows", label: "Веѓи", icon: Eye },
 ];
 
 const ServiceTabs = ({ activeService, onServiceChange }: ServiceTabsProps) => {
