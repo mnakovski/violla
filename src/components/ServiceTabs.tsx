@@ -14,7 +14,7 @@ const services = [
 
 const ServiceTabs = ({ activeService, onServiceChange }: ServiceTabsProps) => {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+    <div className="flex flex-wrap gap-2">
       {services.map((service) => {
         const Icon = service.icon;
         const isActive = activeService === service.id;
