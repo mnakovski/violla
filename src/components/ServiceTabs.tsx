@@ -1,4 +1,4 @@
-import { Scissors, Sparkles, Heart, Eye } from "lucide-react";
+import { Scissors, Sparkles, Heart } from "lucide-react";
 
 interface ServiceTabsProps {
   activeService: string;
@@ -9,7 +9,6 @@ const services = [
   { id: "hair", label: "Коса", icon: Scissors },
   { id: "nails", label: "Нокти", icon: Sparkles },
   { id: "waxing", label: "Депилација", icon: Heart },
-  { id: "eyebrows", label: "Веѓи", icon: Eye },
 ];
 
 const ServiceTabs = ({ activeService, onServiceChange }: ServiceTabsProps) => {
