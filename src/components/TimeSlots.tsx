@@ -1,4 +1,5 @@
 import { isSunday } from "date-fns";
+import { useAppointments, getOccupiedSlots } from "@/hooks/useAppointments";
 
 interface TimeSlotsProps {
   selectedDate: Date;
@@ -15,22 +16,9 @@ const generateTimeSlots = () => {
   return slots;
 };
 
-// Simulated availability data (in a real app, this would come from backend)
-const getAvailability = (service: string, date: Date) => {
-  const slots = generateTimeSlots();
-  const dayOfWeek = date.getDay();
-  
-  // Random but consistent availability based on service and day
-  const seed = service.length + dayOfWeek;
-  
-  return slots.map((slot, index) => ({
-    time: slot,
-    available: (index + seed) % 3 !== 0, // Some slots unavailable
-  }));
-};
-
 const TimeSlots = ({ selectedDate, activeService }: TimeSlotsProps) => {
   const isClosed = isSunday(selectedDate);
+  const { appointments, loading } = useAppointments(selectedDate, activeService);
   
   if (isClosed) {
     return (
@@ -46,7 +34,8 @@ const TimeSlots = ({ selectedDate, activeService }: TimeSlotsProps) => {
     );
   }
 
-  const availability = getAvailability(activeService, selectedDate);
+  const timeSlots = generateTimeSlots();
+  const occupiedSlots = getOccupiedSlots(appointments, selectedDate, activeService);
 
   return (
     <div className="salon-card p-4">
@@ -66,18 +55,27 @@ const TimeSlots = ({ selectedDate, activeService }: TimeSlotsProps) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-2">
-        {availability.map(({ time, available }) => (
-          <div
-            key={time}
-            className={`time-slot ${
-              available ? "time-slot-available" : "time-slot-unavailable"
-            }`}
-          >
-            <span className="text-sm font-medium">{time}</span>
-          </div>
-        ))}
-      </div>
+      {loading ? (
+        <div className="text-center py-8 text-muted-foreground">
+          Се вчитува...
+        </div>
+      ) : (
+        <div className="grid grid-cols-4 gap-2">
+          {timeSlots.map((time) => {
+            const isOccupied = occupiedSlots.has(time);
+            return (
+              <div
+                key={time}
+                className={`time-slot ${
+                  isOccupied ? "time-slot-unavailable" : "time-slot-available"
+                }`}
+              >
+                <span className="text-sm font-medium">{time}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <p className="mt-4 text-xs text-center text-muted-foreground">
         Контактирајте нè за да закажете термин
