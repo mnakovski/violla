@@ -62,6 +62,7 @@ const Admin = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
   const [formData, setFormData] = useState({
+    customer_name: "",
     service_type: "hair" as "hair" | "nails" | "waxing",
     appointment_date: format(new Date(), "yyyy-MM-dd"),
     start_time: "09:00",
@@ -81,6 +82,7 @@ const Admin = () => {
     if (appointment) {
       setEditingAppointment(appointment);
       setFormData({
+        customer_name: appointment.customer_name || "",
         service_type: appointment.service_type,
         appointment_date: appointment.appointment_date,
         start_time: appointment.start_time.slice(0, 5),
@@ -90,6 +92,7 @@ const Admin = () => {
     } else {
       setEditingAppointment(null);
       setFormData({
+        customer_name: "",
         service_type: "hair",
         appointment_date: format(new Date(), "yyyy-MM-dd"),
         start_time: "09:00",
@@ -212,6 +215,7 @@ const Admin = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Име</TableHead>
                 <TableHead>Датум</TableHead>
                 <TableHead>Време</TableHead>
                 <TableHead>Услуга</TableHead>
@@ -236,6 +240,9 @@ const Admin = () => {
                       key={apt.id}
                       className={isSunday ? "bg-accent/10" : ""}
                     >
+                      <TableCell className="font-medium">
+                        {apt.customer_name || "Непознато"}
+                      </TableCell>
                       <TableCell>
                         {format(parseISO(apt.appointment_date), "d MMM yyyy", {
                           locale: mk,
@@ -287,6 +294,17 @@ const Admin = () => {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Име на клиент</Label>
+              <Input
+                value={formData.customer_name}
+                onChange={(e) =>
+                  setFormData({ ...formData, customer_name: e.target.value })
+                }
+                placeholder="Внесете име..."
+              />
+            </div>
+
             <div className="space-y-2">
               <Label>Услуга</Label>
               <Select

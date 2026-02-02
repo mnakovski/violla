@@ -5,6 +5,7 @@ import { format, parse } from "date-fns";
 // Full appointment type (admin only)
 export interface Appointment {
   id: string;
+  customer_name?: string;
   service_type: "hair" | "nails" | "waxing";
   appointment_date: string;
   start_time: string;
@@ -107,6 +108,7 @@ export const useAdminAppointments = () => {
   };
 
   const createAppointment = async (appointment: {
+    customer_name?: string;
     service_type: "hair" | "nails" | "waxing";
     appointment_date: string;
     start_time: string;
