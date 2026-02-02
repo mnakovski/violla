@@ -36,29 +36,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // TEMPORARY: Bypass auth check for testing
+    // TEMPORARY: Bypass auth check for testing (Commented out actual logic below)
     setIsAdmin(true);
     setLoading(false);
-    return;
-
-    /* Original Auth Logic (Disabled)
+    
+    /* 
+    // RESTORE THIS FOR PRODUCTION:
     let mounted = true;
 
-    // Helper to handle session and role
     const handleSession = async (currentSession: Session | null) => {
-    ...
-    */
       setSession(currentSession);
       const currentUser = currentSession?.user ?? null;
       setUser(currentUser);
 
       if (currentUser) {
-        // Only check role if we have a user
-        const adminStatus = await checkAdminRole(currentUser.id);
-        if (mounted) {
-          setIsAdmin(adminStatus);
-          setLoading(false);
-        }
+        checkAdminRole(currentUser.id).then((adminStatus) => {
+          if (mounted) {
+            setIsAdmin(adminStatus);
+            setLoading(false);
+          }
+        });
       } else {
         if (mounted) {
           setIsAdmin(false);
@@ -67,15 +64,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
-    // 1. Initial Check
     supabase.auth.getSession().then(({ data: { session } }) => {
       handleSession(session);
     });
 
-    // 2. Real-time Listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        // Reset loading on auth change to prevent flicker
         if (mounted) setLoading(true);
         await handleSession(session);
       }
@@ -85,6 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       mounted = false;
       subscription.unsubscribe();
     };
+    */
   }, []);
 
   const signIn = async (email: string, password: string) => {
