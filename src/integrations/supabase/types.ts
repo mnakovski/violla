@@ -70,7 +70,30 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      appointments_public: {
+        Row: {
+          appointment_date: string | null
+          duration_minutes: number | null
+          id: string | null
+          service_type: Database["public"]["Enums"]["service_type"] | null
+          start_time: string | null
+        }
+        Insert: {
+          appointment_date?: string | null
+          duration_minutes?: number | null
+          id?: string | null
+          service_type?: Database["public"]["Enums"]["service_type"] | null
+          start_time?: string | null
+        }
+        Update: {
+          appointment_date?: string | null
+          duration_minutes?: number | null
+          id?: string | null
+          service_type?: Database["public"]["Enums"]["service_type"] | null
+          start_time?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_appointment_overlap: {
