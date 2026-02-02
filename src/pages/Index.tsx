@@ -10,7 +10,7 @@ const Index = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   return (
-    <div className="min-h-screen bg-background pb-40">
+    <div className="min-h-screen bg-background pb-52">
       <Header />
       
       <main className="max-w-md mx-auto px-4 py-6 space-y-6">

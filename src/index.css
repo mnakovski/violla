@@ -111,11 +111,17 @@
   }
 
   .time-slot-available {
-    @apply bg-card border-salon-champagne/30;
+    @apply bg-card/80 border-2 border-salon-champagne/50;
+    box-shadow: 0 0 0 1px hsl(var(--salon-champagne) / 0.15);
+  }
+
+  .time-slot-available:hover {
+    @apply border-salon-champagne/70 bg-card;
   }
 
   .time-slot-unavailable {
-    @apply bg-muted text-muted-foreground opacity-50;
+    @apply bg-muted/60 text-muted-foreground opacity-40 border-transparent;
+    cursor: not-allowed;
   }
 
   .contact-btn {
