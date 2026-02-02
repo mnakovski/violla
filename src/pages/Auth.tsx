@@ -12,13 +12,12 @@ const emailSchema = z.string().email("Невалидна е-пошта");
 const passwordSchema = z.string().min(6, "Лозинката мора да има минимум 6 карактери");
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   
-  const { signIn, signUp, user, isAdmin } = useAuth();
+  const { signIn, user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -59,43 +58,19 @@ const Auth = () => {
     setLoading(true);
     
     try {
-      if (isLogin) {
-        const { error } = await signIn(email, password);
-        if (error) {
-          if (error.message.includes("Invalid login credentials")) {
-            toast({
-              title: "Грешка при најава",
-              description: "Невалидни податоци за најава",
-              variant: "destructive",
-            });
-          } else {
-            toast({
-              title: "Грешка",
-              description: error.message,
-              variant: "destructive",
-            });
-          }
-        }
-      } else {
-        const { error } = await signUp(email, password);
-        if (error) {
-          if (error.message.includes("User already registered")) {
-            toast({
-              title: "Грешка",
-              description: "Корисникот веќе постои",
-              variant: "destructive",
-            });
-          } else {
-            toast({
-              title: "Грешка",
-              description: error.message,
-              variant: "destructive",
-            });
-          }
+      const { error } = await signIn(email, password);
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          toast({
+            title: "Грешка при најава",
+            description: "Невалидни податоци за најава",
+            variant: "destructive",
+          });
         } else {
           toast({
-            title: "Успешна регистрација",
-            description: "Проверете ја вашата е-пошта за потврда",
+            title: "Грешка",
+            description: error.message,
+            variant: "destructive",
           });
         }
       }
@@ -118,12 +93,10 @@ const Auth = () => {
 
         <div className="salon-card p-6">
           <h1 className="text-2xl font-bold text-center text-foreground mb-2">
-            {isLogin ? "Админ Најава" : "Регистрација"}
+            Админ Најава
           </h1>
           <p className="text-sm text-muted-foreground text-center mb-6">
-            {isLogin
-              ? "Внесете ги вашите податоци"
-              : "Креирајте нов профил"}
+            Внесете ги вашите податоци
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -162,24 +135,9 @@ const Auth = () => {
               className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
               disabled={loading}
             >
-              {loading ? "Чекајте..." : isLogin ? "Најави се" : "Регистрирај се"}
+              {loading ? "Чекајте..." : "Најави се"}
             </Button>
           </form>
-
-          <div className="mt-4 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setErrors({});
-              }}
-              className="text-sm text-accent hover:underline"
-            >
-              {isLogin
-                ? "Немате профил? Регистрирајте се"
-                : "Веќе имате профил? Најавете се"}
-            </button>
-          </div>
         </div>
 
         <div className="mt-4 text-center">

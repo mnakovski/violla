@@ -47,6 +47,26 @@ export const useAppointments = (date?: Date, serviceType?: string) => {
 
   useEffect(() => {
     fetchAppointments();
+
+    // Subscribe to realtime changes for immediate UI updates
+    const channel = supabase
+      .channel('public-appointments')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments',
+        },
+        () => {
+          fetchAppointments();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [date?.toDateString(), serviceType]);
 
   return { appointments, loading, error, refetch: fetchAppointments };
@@ -137,6 +157,26 @@ export const useAdminAppointments = () => {
 
   useEffect(() => {
     fetchAllAppointments();
+
+    // Subscribe to realtime changes for admin panel
+    const channel = supabase
+      .channel('admin-appointments')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments',
+        },
+        () => {
+          fetchAllAppointments();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return {
