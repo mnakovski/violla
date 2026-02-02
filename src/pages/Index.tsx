@@ -15,25 +15,29 @@ const Index = () => {
       
       <main className="max-w-md mx-auto px-4 py-6 space-y-6">
         {/* Service Selection */}
-        <section>
+        <section className="text-center">
           <h2 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
             Избери услуга
           </h2>
-          <ServiceTabs 
-            activeService={activeService} 
-            onServiceChange={setActiveService} 
-          />
+          <div className="flex justify-center">
+            <ServiceTabs 
+              activeService={activeService} 
+              onServiceChange={setActiveService} 
+            />
+          </div>
         </section>
 
         {/* Date Selection */}
-        <section>
+        <section className="text-center">
           <h2 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
             Избери датум
           </h2>
-          <DatePicker 
-            selectedDate={selectedDate} 
-            onDateChange={setSelectedDate} 
-          />
+          <div className="flex justify-center">
+            <DatePicker 
+              selectedDate={selectedDate} 
+              onDateChange={setSelectedDate} 
+            />
+          </div>
         </section>
 
         {/* Time Slots */}
