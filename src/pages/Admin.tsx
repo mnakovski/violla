@@ -69,11 +69,13 @@ const Admin = () => {
     notes: "",
   });
 
+  /*
   useEffect(() => {
     if (!authLoading && (!user || !isAdmin)) {
       navigate("/auth");
     }
   }, [user, isAdmin, authLoading, navigate]);
+  */
 
   const handleOpenDialog = (appointment?: Appointment) => {
     if (appointment) {
