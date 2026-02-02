@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parse } from "date-fns";
 
+// Full appointment type (admin only)
 export interface Appointment {
   id: string;
   service_type: "hair" | "nails" | "waxing";
@@ -13,15 +14,25 @@ export interface Appointment {
   updated_at: string;
 }
 
+// Public appointment type (no sensitive fields)
+export interface PublicAppointment {
+  id: string;
+  service_type: "hair" | "nails" | "waxing";
+  appointment_date: string;
+  start_time: string;
+  duration_minutes: number;
+}
+
 export const useAppointments = (date?: Date, serviceType?: string) => {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointments, setAppointments] = useState<PublicAppointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   const fetchAppointments = async () => {
     try {
       setLoading(true);
-      let query = supabase.from("appointments").select("*");
+      // Use the public view which only exposes non-sensitive columns
+      let query = supabase.from("appointments_public").select("*");
       
       if (date) {
         query = query.eq("appointment_date", format(date, "yyyy-MM-dd"));
@@ -192,7 +203,7 @@ export const useAdminAppointments = () => {
 
 // Helper to get occupied time slots for a given date and service
 export const getOccupiedSlots = (
-  appointments: Appointment[],
+  appointments: PublicAppointment[],
   date: Date,
   serviceType: string
 ): Set<string> => {
