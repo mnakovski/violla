@@ -4,7 +4,7 @@ const ContactBar = () => {
   const phoneNumber = "+38978721872";
   const viberNumber = "38978721872"; // No + for Viber URI typically
   const whatsappNumber = "38978721872";
-  const messengerLink = "https://m.me/100039719028828";
+  const messengerLink = "https://m.me/109280013817957";
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 safe-area-pb z-40">
