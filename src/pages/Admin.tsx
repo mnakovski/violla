@@ -456,7 +456,7 @@ const Admin = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, appointment_date: e.target.value })
                   }
-                  className="h-11"
+                  className="h-11 [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:w-5 [&::-webkit-calendar-picker-indicator]:h-5 [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                 />
               </div>
 
@@ -468,7 +468,7 @@ const Admin = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, start_time: e.target.value })
                   }
-                  className="h-11"
+                  className="h-11 [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:w-5 [&::-webkit-calendar-picker-indicator]:h-5 [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                 />
               </div>
             </div>
