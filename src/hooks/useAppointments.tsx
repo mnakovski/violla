@@ -129,11 +129,12 @@ export const useAdminAppointments = () => {
     }
 
     // Use RPC function to bypass schema cache issues with new columns
-    const { error } = await supabase.rpc("create_appointment", {
+    // Using add_new_appointment (v2) with text parameters for safety
+    const { error } = await supabase.rpc("add_new_appointment", {
       p_customer_name: appointment.customer_name || "Unknown",
       p_service_type: appointment.service_type,
-      p_appointment_date: appointment.appointment_date,
-      p_start_time: appointment.start_time,
+      p_appointment_date: appointment.appointment_date, // Sends string "YYYY-MM-DD"
+      p_start_time: appointment.start_time,             // Sends string "HH:MM"
       p_duration_minutes: appointment.duration_minutes,
       p_notes: appointment.notes || null
     });
