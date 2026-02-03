@@ -128,18 +128,20 @@ export const useAdminAppointments = () => {
       throw new Error("Овој термин се преклопува со постоечки термин");
     }
 
-    // Use RPC function to bypass schema cache issues with new columns
-    // Using add_new_appointment (v2) with text parameters for safety
-    const { error } = await supabase.rpc("add_new_appointment", {
-      p_customer_name: appointment.customer_name || "Unknown",
-      p_service_type: appointment.service_type,
-      p_appointment_date: appointment.appointment_date, // Sends string "YYYY-MM-DD"
-      p_start_time: appointment.start_time,             // Sends string "HH:MM"
-      p_duration_minutes: appointment.duration_minutes,
-      p_notes: appointment.notes || null
+    // Use standard insert, bypassing RPC issues
+    const { error } = await supabase.from("appointments").insert({
+      customer_name: appointment.customer_name || "Unknown",
+      service_type: appointment.service_type,
+      appointment_date: appointment.appointment_date,
+      start_time: appointment.start_time,
+      duration_minutes: appointment.duration_minutes,
+      notes: appointment.notes || null
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Insert Error:", error);
+      throw error;
+    }
     await fetchAllAppointments();
   };
 
