@@ -21,7 +21,7 @@ const ContactBar = () => {
         {/* Secondary actions - Viber, WhatsApp & Messenger */}
         <div className="flex items-center justify-center gap-3">
           <a
-            href={`viber://chat?number=${viberNumber}`}
+            href={`viber://add?number=${viberNumber}`}
             className="flex items-center gap-2 px-4 py-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors"
             aria-label="Viber"
           >
