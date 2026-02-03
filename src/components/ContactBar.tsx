@@ -1,11 +1,13 @@
 import { Phone } from "lucide-react";
 
 const ContactBar = () => {
-  const phoneNumber = "+38970123456"; // Replace with actual number
-  const viberNumber = "+38970123456"; // Replace with actual number
+  const phoneNumber = "+38978721872";
+  const viberNumber = "38978721872"; // No + for Viber URI typically
+  const whatsappNumber = "38978721872";
+  const messengerLink = "https://m.me/100039719028828";
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 safe-area-pb">
+    <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 safe-area-pb z-40">
       <div className="max-w-md mx-auto">
         {/* Primary action - Phone call */}
         <a
@@ -19,7 +21,7 @@ const ContactBar = () => {
         {/* Secondary actions - Viber, WhatsApp & Messenger */}
         <div className="flex items-center justify-center gap-3">
           <a
-            href={`viber://chat?number=${encodeURIComponent(viberNumber)}`}
+            href={`viber://chat?number=${viberNumber}`}
             className="flex items-center gap-2 px-4 py-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors"
             aria-label="Viber"
           >
@@ -29,7 +31,7 @@ const ContactBar = () => {
             <span className="text-sm font-medium text-foreground">Viber</span>
           </a>
           <a
-            href="https://wa.me/38970123456"
+            href={`https://wa.me/${whatsappNumber}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-4 py-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors"
@@ -41,7 +43,7 @@ const ContactBar = () => {
             <span className="text-sm font-medium text-foreground">WhatsApp</span>
           </a>
           <a
-            href="https://m.me/yourpage"
+            href={messengerLink}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-4 py-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors"
