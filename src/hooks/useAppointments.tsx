@@ -79,6 +79,7 @@ export const useAppointments = (date?: Date, serviceType?: string) => {
     return () => {
       supabase.removeChannel(channel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date?.toDateString(), serviceType]);
 
   return { appointments, loading, error, refetch: fetchAppointments };
@@ -127,7 +128,16 @@ export const useAdminAppointments = () => {
       throw new Error("Овој термин се преклопува со постоечки термин");
     }
 
-    const { error } = await supabase.from("appointments").insert([appointment]);
+    // Use RPC function to bypass schema cache issues with new columns
+    const { error } = await supabase.rpc("create_appointment", {
+      p_customer_name: appointment.customer_name || "Unknown",
+      p_service_type: appointment.service_type,
+      p_appointment_date: appointment.appointment_date,
+      p_start_time: appointment.start_time,
+      p_duration_minutes: appointment.duration_minutes,
+      p_notes: appointment.notes || null
+    });
+
     if (error) throw error;
     await fetchAllAppointments();
   };
