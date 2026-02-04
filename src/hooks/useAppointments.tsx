@@ -234,11 +234,12 @@ export const getOccupiedSlots = (
     .forEach((apt) => {
       // Parse start time and mark all slots covered by the appointment
       const startTime = parse(apt.start_time, "HH:mm:ss", new Date());
-      const slotsNeeded = apt.duration_minutes / 30;
+      // Divide duration by 15 to get number of 15-min slots needed
+      const slotsNeeded = apt.duration_minutes / 15;
       
       for (let i = 0; i < slotsNeeded; i++) {
         const slotTime = new Date(startTime);
-        slotTime.setMinutes(slotTime.getMinutes() + i * 30);
+        slotTime.setMinutes(slotTime.getMinutes() + i * 15);
         occupiedSlots.add(format(slotTime, "HH:mm"));
       }
     });
