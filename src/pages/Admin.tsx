@@ -166,6 +166,8 @@ const Admin = () => {
       // Prepare data for submission
       // If a sub-service is selected, we might want to prepend it to notes if not already there
       let finalNotes = formData.notes;
+      /* 
+      // Removed per client request: Don't auto-fill notes with sub-service name
       if (formData.sub_service) {
          const serviceConfig = SERVICE_OPTIONS.find(s => s.id === formData.service_type);
          const subServiceLabel = serviceConfig?.subServices.find(sub => sub.id === formData.sub_service)?.label;
@@ -177,6 +179,7 @@ const Admin = () => {
             }
          }
       }
+      */
 
       const submissionData = {
         customer_name: formData.customer_name,
@@ -333,7 +336,7 @@ const Admin = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Телефон (опц.)</Label>
+                <Label>Телефон</Label>
                 <Input
                   value={formData.client_phone}
                   onChange={(e) =>
