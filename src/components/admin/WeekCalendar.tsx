@@ -202,14 +202,20 @@ const WeekCalendar = ({
           >
             Денес
           </Button>
+        </div>
 
+        <div className="flex items-center gap-2 flex-1 justify-center sm:justify-start sm:flex-none">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <CalendarIcon className="h-4 w-4" />
+              <Button 
+                variant="ghost" 
+                className="text-sm font-medium text-foreground hover:bg-accent/10 px-2 h-8"
+              >
+                {format(currentWeekStart, "MMMM yyyy", { locale: mk })}
+                <CalendarIcon className="ml-2 h-3.5 w-3.5 opacity-70" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+            <PopoverContent className="w-auto p-0" align="center">
               <Calendar
                 mode="single"
                 selected={currentWeekStart}
@@ -219,10 +225,6 @@ const WeekCalendar = ({
             </PopoverContent>
           </Popover>
         </div>
-
-        <h3 className="text-sm font-medium text-foreground">
-          {format(currentWeekStart, "MMMM yyyy", { locale: mk })}
-        </h3>
 
         {isMobile && (
           <div className="flex gap-1">
