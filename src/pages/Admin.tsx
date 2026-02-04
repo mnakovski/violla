@@ -112,11 +112,24 @@ const Admin = () => {
   const handleOpenDialog = (appointment?: Appointment) => {
     if (appointment) {
       setEditingAppointment(appointment);
-      // Try to extract sub-service from notes if possible, or just reset
+      
+      // Try to extract sub-service from notes
+      let foundSubService = "";
+      if (appointment.notes && appointment.notes.startsWith("[")) {
+        const endIndex = appointment.notes.indexOf("]");
+        if (endIndex > 1) {
+          const label = appointment.notes.substring(1, endIndex);
+          // Find ID based on label
+          const serviceConfig = SERVICE_OPTIONS.find(s => s.id === appointment.service_type);
+          const sub = serviceConfig?.subServices.find(s => s.label === label);
+          if (sub) foundSubService = sub.id;
+        }
+      }
+
       setFormData({
         customer_name: appointment.customer_name || "",
         service_type: appointment.service_type,
-        sub_service: "",
+        sub_service: foundSubService,
         appointment_date: appointment.appointment_date,
         start_time: appointment.start_time.slice(0, 5),
         duration_minutes: appointment.duration_minutes,
