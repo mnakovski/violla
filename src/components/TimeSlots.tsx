@@ -6,12 +6,14 @@ interface TimeSlotsProps {
   activeService: string;
 }
 
-// Generate time slots from 08:00 to 20:00
+// Generate time slots from 08:00 to 20:00 (15 min intervals)
 const generateTimeSlots = () => {
   const slots = [];
   for (let hour = 8; hour < 20; hour++) {
     slots.push(`${hour.toString().padStart(2, "0")}:00`);
+    slots.push(`${hour.toString().padStart(2, "0")}:15`);
     slots.push(`${hour.toString().padStart(2, "0")}:30`);
+    slots.push(`${hour.toString().padStart(2, "0")}:45`);
   }
   return slots;
 };
@@ -60,17 +62,17 @@ const TimeSlots = ({ selectedDate, activeService }: TimeSlotsProps) => {
           Се вчитува...
         </div>
       ) : (
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-4 gap-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
           {timeSlots.map((time) => {
             const isOccupied = occupiedSlots.has(time);
             return (
               <div
                 key={time}
-                className={`time-slot ${
+                className={`time-slot text-xs py-1.5 ${
                   isOccupied ? "time-slot-unavailable" : "time-slot-available"
                 }`}
               >
-                <span className="text-sm font-medium">{time}</span>
+                <span className="font-medium">{time}</span>
               </div>
             );
           })}
