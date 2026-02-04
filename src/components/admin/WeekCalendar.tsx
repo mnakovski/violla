@@ -120,6 +120,8 @@ const WeekCalendar = ({
     }
   };
 
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+
   const goToToday = () => {
     const today = new Date();
     jumpToDate(today);
@@ -135,6 +137,7 @@ const WeekCalendar = ({
       const index = dayOfWeek === 0 ? 5 : dayOfWeek - 1;
       setMobileStartIndex(Math.min(index, 6 - mobileViewDays));
     }
+    setIsCalendarOpen(false); // Close calendar after selection
   };
 
   // Get appointments for a specific day
@@ -205,7 +208,7 @@ const WeekCalendar = ({
         </div>
 
         <div className="flex items-center gap-2 flex-1 justify-center sm:justify-start sm:flex-none">
-          <Popover>
+          <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
             <PopoverTrigger asChild>
               <Button 
                 variant="ghost" 
@@ -218,9 +221,15 @@ const WeekCalendar = ({
             <PopoverContent className="w-auto p-0" align="center">
               <Calendar
                 mode="single"
-                selected={currentWeekStart}
+                selected={undefined} // Don't show selected state for start of week
                 onSelect={(date) => jumpToDate(date)}
                 initialFocus
+                modifiers={{
+                  today: (date) => isToday(date),
+                }}
+                modifiersClassNames={{
+                  today: "bg-accent/20 text-accent font-bold", // Style for "Today"
+                }}
               />
             </PopoverContent>
           </Popover>
