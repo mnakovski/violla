@@ -256,39 +256,42 @@ const Admin = () => {
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-6">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-card border-b border-border shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border/50 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img
               src={viollaLogo}
               alt="Violla"
-              className="w-10 h-10 rounded-full object-cover border border-border"
+              className="w-10 h-10 rounded-full object-cover border-2 border-accent/40 shadow-md"
             />
-            <div>
-              <h1 className="text-lg font-semibold text-foreground leading-tight">
-                Админ Панел
-              </h1>
-              <p className="text-xs text-muted-foreground hidden sm:block">
-                Управување со термини
-              </p>
-            </div>
+            <h1 
+              className="text-xl text-foreground tracking-wide"
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+              Violla
+            </h1>
+            <span className="hidden sm:inline-block text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">
+              Админ
+            </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 bg-muted/30 rounded-lg p-1">
             <Button
               variant="ghost"
               size="icon"
+              className="h-8 w-8 hover:bg-background/50"
               onClick={() => navigate("/")}
               title="Почетна"
             >
-              <Home className="w-5 h-5" />
+              <Home className="w-4 h-4" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
+              className="h-8 w-8 hover:bg-background/50"
               onClick={handleSignOut}
               title="Одјави се"
             >
-              <LogOut className="w-5 h-5" />
+              <LogOut className="w-4 h-4" />
             </Button>
           </div>
         </div>
