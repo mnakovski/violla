@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAppointments, Appointment } from "@/hooks/useAppointments";
@@ -30,21 +30,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { format, parseISO } from "date-fns";
-import { mk } from "date-fns/locale";
-import { Plus, Pencil, Trash2, LogOut, Home, Calendar, Clock, User, Scissors } from "lucide-react";
+import { format } from "date-fns";
+import { Plus, LogOut, Home, Calendar } from "lucide-react";
 import viollaLogo from "@/assets/violla-logo.jpg";
 import { SERVICE_OPTIONS } from "@/constants/services";
+import WeekCalendar from "@/components/admin/WeekCalendar";
 
 const serviceLabels: Record<string, string> = {
   hair: "Коса",
@@ -103,6 +94,20 @@ const Admin = () => {
     duration_minutes: 30,
     notes: "",
   });
+
+  const handleSlotClick = (date: string, time: string) => {
+    setEditingAppointment(null);
+    setFormData({
+      customer_name: "",
+      service_type: "hair",
+      sub_service: "",
+      appointment_date: date,
+      start_time: time,
+      duration_minutes: 30,
+      notes: "",
+    });
+    setIsDialogOpen(true);
+  };
 
   const handleOpenDialog = (appointment?: Appointment) => {
     if (appointment) {
@@ -272,154 +277,12 @@ const Admin = () => {
           </Button>
         </div>
 
-        {/* Empty State */}
-        {appointments.length === 0 && (
-          <div className="text-center py-12 bg-card rounded-lg border border-border/50">
-            <Calendar className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">Нема закажани термини</h3>
-            <p className="text-muted-foreground mb-6">Календарот е празен за овој период.</p>
-            <Button onClick={() => handleOpenDialog()} variant="outline">
-              <Plus className="w-4 h-4 mr-2" />
-              Додај прв термин
-            </Button>
-          </div>
-        )}
-
-        {/* Desktop Table View */}
-        <div className="hidden md:block salon-card overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Име</TableHead>
-                <TableHead>Датум</TableHead>
-                <TableHead>Време</TableHead>
-                <TableHead>Услуга</TableHead>
-                <TableHead>Траење</TableHead>
-                <TableHead>Белешки</TableHead>
-                <TableHead className="text-right">Акции</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {appointments.map((apt) => {
-                const isSunday = parseISO(apt.appointment_date).getDay() === 0;
-                return (
-                  <TableRow
-                    key={apt.id}
-                    className={isSunday ? "bg-accent/5" : ""}
-                  >
-                    <TableCell className="font-medium">
-                      {apt.customer_name || "Непознато"}
-                    </TableCell>
-                    <TableCell>
-                      {format(parseISO(apt.appointment_date), "d MMM yyyy", {
-                        locale: mk,
-                      })}
-                      {isSunday && (
-                        <span className="ml-2 text-xs bg-accent/20 text-accent px-2 py-0.5 rounded-full">
-                          Недела
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>{apt.start_time.slice(0, 5)}</TableCell>
-                    <TableCell>{serviceLabels[apt.service_type]}</TableCell>
-                    <TableCell>{apt.duration_minutes} мин</TableCell>
-                    <TableCell className="max-w-[200px] truncate text-muted-foreground">
-                      {apt.notes || "-"}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleOpenDialog(apt)}
-                        >
-                          <Pencil className="w-4 h-4 text-muted-foreground hover:text-foreground" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => confirmDelete(apt.id)}
-                        >
-                          <Trash2 className="w-4 h-4 text-destructive/70 hover:text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
-
-        {/* Mobile Card View */}
-        <div className="md:hidden space-y-4">
-          {appointments.map((apt) => {
-            const isSunday = parseISO(apt.appointment_date).getDay() === 0;
-            return (
-              <Card key={apt.id} className={`overflow-hidden ${isSunday ? "border-accent/30 bg-accent/5" : ""}`}>
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="bg-primary/10 p-2 rounded-full">
-                        <User className="w-4 h-4 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-foreground">
-                          {apt.customer_name || "Непознато"}
-                        </h3>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Scissors className="w-3 h-3" />
-                          {serviceLabels[apt.service_type]}
-                        </p>
-                      </div>
-                    </div>
-                    {isSunday && (
-                      <span className="text-[10px] font-bold bg-accent/20 text-accent px-2 py-1 rounded-full uppercase tracking-wide">
-                        Недела
-                      </span>
-                    )}
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-2 text-sm mb-4">
-                    <div className="flex items-center gap-2 text-muted-foreground bg-secondary/50 p-2 rounded">
-                      <Calendar className="w-4 h-4" />
-                      <span>{format(parseISO(apt.appointment_date), "d MMM", { locale: mk })}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-muted-foreground bg-secondary/50 p-2 rounded">
-                      <Clock className="w-4 h-4" />
-                      <span>{apt.start_time.slice(0, 5)} ({apt.duration_minutes}м)</span>
-                    </div>
-                  </div>
-
-                  {apt.notes && (
-                    <div className="text-sm text-muted-foreground bg-secondary/30 p-3 rounded mb-4 italic">
-                      "{apt.notes}"
-                    </div>
-                  )}
-
-                  <div className="flex gap-2 border-t border-border pt-3 mt-1">
-                    <Button 
-                      variant="outline" 
-                      className="flex-1 h-9 text-sm"
-                      onClick={() => handleOpenDialog(apt)}
-                    >
-                      <Pencil className="w-3.5 h-3.5 mr-2" />
-                      Уреди
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="flex-1 h-9 text-sm text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/20"
-                      onClick={() => confirmDelete(apt.id)}
-                    >
-                      <Trash2 className="w-3.5 h-3.5 mr-2" />
-                      Избриши
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        {/* Week Calendar View */}
+        <WeekCalendar
+          appointments={appointments}
+          onSlotClick={handleSlotClick}
+          onAppointmentClick={handleOpenDialog}
+        />
       </main>
 
       {/* Add/Edit Dialog */}
