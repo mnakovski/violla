@@ -44,18 +44,19 @@ import { format, parseISO } from "date-fns";
 import { mk } from "date-fns/locale";
 import { Plus, Pencil, Trash2, LogOut, Home, Calendar, Clock, User, Scissors } from "lucide-react";
 import viollaLogo from "@/assets/violla-logo.jpg";
-
-const serviceLabels: Record<string, string> = {
-  hair: "Коса",
-  nails: "Нокти",
-  waxing: "Депилација",
-};
+import { SERVICE_OPTIONS } from "@/constants/services";
 
 const durationOptions = [
+  { value: 15, label: "15 минути" },
   { value: 30, label: "30 минути" },
+  { value: 45, label: "45 минути" },
   { value: 60, label: "60 минути" },
-  { value: 90, label: "90 минути" },
-  { value: 120, label: "120 минути" },
+  { value: 75, label: "1 час 15 мин" },
+  { value: 90, label: "1 час 30 мин" },
+  { value: 105, label: "1 час 45 мин" },
+  { value: 120, label: "2 часа" },
+  { value: 150, label: "2 часа 30 мин" },
+  { value: 180, label: "3 часа" },
 ];
 
 const Admin = () => {
@@ -78,26 +79,21 @@ const Admin = () => {
   const [formData, setFormData] = useState({
     customer_name: "",
     service_type: "hair" as "hair" | "nails" | "waxing",
+    sub_service: "", // Temporary state for UI
     appointment_date: format(new Date(), "yyyy-MM-dd"),
     start_time: "09:00",
     duration_minutes: 30,
     notes: "",
   });
 
-  /*
-  useEffect(() => {
-    if (!authLoading && (!user || !isAdmin)) {
-      navigate("/auth");
-    }
-  }, [user, isAdmin, authLoading, navigate]);
-  */
-
   const handleOpenDialog = (appointment?: Appointment) => {
     if (appointment) {
       setEditingAppointment(appointment);
+      // Try to extract sub-service from notes if possible, or just reset
       setFormData({
         customer_name: appointment.customer_name || "",
         service_type: appointment.service_type,
+        sub_service: "",
         appointment_date: appointment.appointment_date,
         start_time: appointment.start_time.slice(0, 5),
         duration_minutes: appointment.duration_minutes,
@@ -108,6 +104,7 @@ const Admin = () => {
       setFormData({
         customer_name: "",
         service_type: "hair",
+        sub_service: "",
         appointment_date: format(new Date(), "yyyy-MM-dd"),
         start_time: "09:00",
         duration_minutes: 30,
@@ -119,14 +116,38 @@ const Admin = () => {
 
   const handleSubmit = async () => {
     try {
+      // Prepare data for submission
+      // If a sub-service is selected, we might want to prepend it to notes if not already there
+      let finalNotes = formData.notes;
+      if (formData.sub_service) {
+         const serviceConfig = SERVICE_OPTIONS.find(s => s.id === formData.service_type);
+         const subServiceLabel = serviceConfig?.subServices.find(sub => sub.id === formData.sub_service)?.label;
+         
+         if (subServiceLabel) {
+            // Simple check to avoid duplication if editing
+            if (!finalNotes.includes(subServiceLabel)) {
+               finalNotes = `[${subServiceLabel}] ${finalNotes}`;
+            }
+         }
+      }
+
+      const submissionData = {
+        customer_name: formData.customer_name,
+        service_type: formData.service_type,
+        appointment_date: formData.appointment_date,
+        start_time: formData.start_time,
+        duration_minutes: formData.duration_minutes,
+        notes: finalNotes
+      };
+
       if (editingAppointment) {
-        await updateAppointment(editingAppointment.id, formData);
+        await updateAppointment(editingAppointment.id, submissionData);
         toast({
           title: "Успешно",
           description: "Терминот е ажуриран",
         });
       } else {
-        await createAppointment(formData);
+        await createAppointment(submissionData);
         toast({
           title: "Успешно",
           description: "Терминот е додаден",
@@ -407,25 +428,54 @@ const Admin = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Услуга</Label>
+                <Label>Категорија</Label>
                 <Select
                   value={formData.service_type}
                   onValueChange={(v) =>
-                    setFormData({ ...formData, service_type: v as "hair" | "nails" | "waxing" })
+                    setFormData({ 
+                      ...formData, 
+                      service_type: v as "hair" | "nails" | "waxing",
+                      sub_service: "" // Reset sub-service when category changes
+                    })
                   }
                 >
                   <SelectTrigger className="h-11">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="hair">Коса</SelectItem>
-                    <SelectItem value="nails">Нокти</SelectItem>
-                    <SelectItem value="waxing">Депилација</SelectItem>
+                    {SERVICE_OPTIONS.map((service) => (
+                      <SelectItem key={service.id} value={service.id}>
+                        {service.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
+                <Label>Услуга</Label>
+                <Select
+                  value={formData.sub_service}
+                  onValueChange={(v) =>
+                    setFormData({ ...formData, sub_service: v })
+                  }
+                  disabled={!formData.service_type}
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Избери..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SERVICE_OPTIONS.find(s => s.id === formData.service_type)?.subServices.map((sub) => (
+                      <SelectItem key={sub.id} value={sub.id}>
+                        {sub.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
                 <Label>Траење</Label>
                 <Select
                   value={formData.duration_minutes.toString()}
@@ -445,7 +495,6 @@ const Admin = () => {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
