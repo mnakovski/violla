@@ -254,7 +254,7 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-6">
+    <div className="min-h-screen bg-background pb-20 md:pb-6 overflow-x-hidden">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border/50 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -297,9 +297,9 @@ const Admin = () => {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-6">
+      <main className="max-w-6xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
         {/* Actions */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-4 sm:mb-6">
           <h2 className="text-xl font-semibold text-foreground">Термини</h2>
           <Button onClick={() => handleOpenDialog()} className="bg-accent hover:bg-accent/90 shadow-md">
             <Plus className="w-4 h-4 mr-2" />
