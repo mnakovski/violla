@@ -61,6 +61,22 @@ const durationOptions = [
   { value: 240, label: "4 часа" },
 ];
 
+const generateTimeOptions = () => {
+  const options = [];
+  for (let hour = 8; hour <= 20; hour++) {
+    const hourStr = hour.toString().padStart(2, "0");
+    options.push(`${hourStr}:00`);
+    if (hour < 20) {
+      options.push(`${hourStr}:15`);
+      options.push(`${hourStr}:30`);
+      options.push(`${hourStr}:45`);
+    }
+  }
+  return options;
+};
+
+const timeOptions = generateTimeOptions();
+
 const Admin = () => {
   const { user, isAdmin, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -513,14 +529,23 @@ const Admin = () => {
 
               <div className="space-y-2">
                 <Label>Време</Label>
-                <Input
-                  type="time"
-                  value={formData.start_time}
-                  onChange={(e) =>
-                    setFormData({ ...formData, start_time: e.target.value })
+                <Select
+                  value={formData.start_time.slice(0, 5)}
+                  onValueChange={(v) =>
+                    setFormData({ ...formData, start_time: v })
                   }
-                  className="h-11 [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:w-5 [&::-webkit-calendar-picker-indicator]:h-5 [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                />
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[200px]">
+                    {timeOptions.map((time) => (
+                      <SelectItem key={time} value={time}>
+                        {time}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
