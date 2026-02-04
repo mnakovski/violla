@@ -95,6 +95,13 @@ const Admin = () => {
     notes: "",
   });
 
+  // Protect Admin Route
+  useEffect(() => {
+    if (!authLoading && (!user || !isAdmin)) {
+      navigate("/auth");
+    }
+  }, [user, isAdmin, authLoading, navigate]);
+
   const handleSlotClick = (date: string, time: string) => {
     setEditingAppointment(null);
     setFormData({

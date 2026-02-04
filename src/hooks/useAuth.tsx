@@ -36,12 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // TEMPORARY: Bypass auth check for testing (Commented out actual logic below)
-    setIsAdmin(true);
-    setLoading(false);
-    
-    /* 
-    // RESTORE THIS FOR PRODUCTION:
+    // PRODUCTION: Auth check enabled
     let mounted = true;
 
     const handleSession = async (currentSession: Session | null) => {
@@ -79,7 +74,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       mounted = false;
       subscription.unsubscribe();
     };
-    */
   }, []);
 
   const signIn = async (email: string, password: string) => {
