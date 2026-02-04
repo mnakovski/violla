@@ -49,14 +49,10 @@ import { SERVICE_OPTIONS } from "@/constants/services";
 const durationOptions = [
   { value: 15, label: "15 минути" },
   { value: 30, label: "30 минути" },
-  { value: 45, label: "45 минути" },
   { value: 60, label: "60 минути" },
-  { value: 75, label: "1 час 15 мин" },
   { value: 90, label: "1 час 30 мин" },
-  { value: 105, label: "1 час 45 мин" },
   { value: 120, label: "2 часа" },
-  { value: 150, label: "2 часа 30 мин" },
-  { value: 180, label: "3 часа" },
+  { value: 240, label: "4 часа" },
 ];
 
 const Admin = () => {
