@@ -10,13 +10,19 @@ import {
   subWeeks,
 } from "date-fns";
 import { mk } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Clock, User } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, User, Calendar as CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Appointment } from "@/hooks/useAppointments";
@@ -116,10 +122,15 @@ const WeekCalendar = ({
 
   const goToToday = () => {
     const today = new Date();
-    const newWeekStart = startOfWeek(today, { weekStartsOn: 1 });
+    jumpToDate(today);
+  };
+
+  const jumpToDate = (date: Date | undefined) => {
+    if (!date) return;
+    const newWeekStart = startOfWeek(date, { weekStartsOn: 1 });
     setCurrentWeekStart(newWeekStart);
     if (isMobile) {
-      const dayOfWeek = today.getDay();
+      const dayOfWeek = date.getDay();
       // Monday = 1, so index = dayOfWeek - 1, but Sunday = 0 so cap at 5
       const index = dayOfWeek === 0 ? 5 : dayOfWeek - 1;
       setMobileStartIndex(Math.min(index, 6 - mobileViewDays));
@@ -191,6 +202,22 @@ const WeekCalendar = ({
           >
             Денес
           </Button>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <CalendarIcon className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={currentWeekStart}
+                onSelect={(date) => jumpToDate(date)}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
         </div>
 
         <h3 className="text-sm font-medium text-foreground">
