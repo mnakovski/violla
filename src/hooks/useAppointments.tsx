@@ -6,6 +6,7 @@ import { format, parse } from "date-fns";
 export interface Appointment {
   id: string;
   customer_name?: string;
+  client_phone?: string;
   service_type: "hair" | "nails" | "waxing";
   appointment_date: string;
   start_time: string;
@@ -110,6 +111,7 @@ export const useAdminAppointments = () => {
 
   const createAppointment = async (appointment: {
     customer_name?: string;
+    client_phone?: string;
     service_type: "hair" | "nails" | "waxing";
     appointment_date: string;
     start_time: string;
@@ -131,6 +133,7 @@ export const useAdminAppointments = () => {
     // Use standard insert, bypassing RPC issues
     const { error } = await supabase.from("appointments").insert({
       customer_name: appointment.customer_name || "Unknown",
+      client_phone: appointment.client_phone || null,
       service_type: appointment.service_type,
       appointment_date: appointment.appointment_date,
       start_time: appointment.start_time,

@@ -42,7 +42,7 @@ const Index = () => {
           </div>
 
           {/* Sub Service Selection */}
-          <div className="min-h-[40px]">
+          <div className="hidden">
              <h3 className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
               Избери услуга
             </h3>

@@ -87,6 +87,7 @@ const Admin = () => {
   
   const [formData, setFormData] = useState({
     customer_name: "",
+    client_phone: "",
     service_type: "hair" as "hair" | "nails" | "waxing",
     sub_service: "", // Temporary state for UI
     appointment_date: format(new Date(), "yyyy-MM-dd"),
@@ -106,6 +107,7 @@ const Admin = () => {
     setEditingAppointment(null);
     setFormData({
       customer_name: "",
+      client_phone: "",
       service_type: "hair",
       sub_service: "",
       appointment_date: date,
@@ -135,6 +137,7 @@ const Admin = () => {
 
       setFormData({
         customer_name: appointment.customer_name || "",
+        client_phone: appointment.client_phone || "",
         service_type: appointment.service_type,
         sub_service: foundSubService,
         appointment_date: appointment.appointment_date,
@@ -146,6 +149,7 @@ const Admin = () => {
       setEditingAppointment(null);
       setFormData({
         customer_name: "",
+        client_phone: "",
         service_type: "hair",
         sub_service: "",
         appointment_date: format(new Date(), "yyyy-MM-dd"),
@@ -176,6 +180,7 @@ const Admin = () => {
 
       const submissionData = {
         customer_name: formData.customer_name,
+        client_phone: formData.client_phone,
         service_type: formData.service_type,
         appointment_date: formData.appointment_date,
         start_time: formData.start_time,
@@ -315,16 +320,29 @@ const Admin = () => {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Име на клиент</Label>
-              <Input
-                value={formData.customer_name}
-                onChange={(e) =>
-                  setFormData({ ...formData, customer_name: e.target.value })
-                }
-                placeholder="Внесете име..."
-                className="h-11"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Име на клиент</Label>
+                <Input
+                  value={formData.customer_name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, customer_name: e.target.value })
+                  }
+                  placeholder="Внесете име..."
+                  className="h-11"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Телефон (опц.)</Label>
+                <Input
+                  value={formData.client_phone}
+                  onChange={(e) =>
+                    setFormData({ ...formData, client_phone: e.target.value })
+                  }
+                  placeholder="070..."
+                  className="h-11"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
