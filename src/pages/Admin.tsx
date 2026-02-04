@@ -46,6 +46,12 @@ import { Plus, Pencil, Trash2, LogOut, Home, Calendar, Clock, User, Scissors } f
 import viollaLogo from "@/assets/violla-logo.jpg";
 import { SERVICE_OPTIONS } from "@/constants/services";
 
+const serviceLabels: Record<string, string> = {
+  hair: "Коса",
+  nails: "Нокти",
+  waxing: "Депилација",
+};
+
 const durationOptions = [
   { value: 15, label: "15 минути" },
   { value: 30, label: "30 минути" },
