@@ -33,7 +33,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Plus, LogOut, Home, Calendar } from "lucide-react";
-import viollaLogo from "@/assets/violla-logo.jpg";
+import viollaLogo from "@/assets/new-logo.jpg";
 import { SERVICE_OPTIONS } from "@/constants/services";
 import WeekCalendar from "@/components/admin/WeekCalendar";
 
