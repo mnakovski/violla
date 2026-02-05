@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import ServiceTabs from "@/components/ServiceTabs";
 import SubServiceSelect from "@/components/SubServiceSelect";
@@ -11,6 +12,16 @@ const Index = () => {
   const [activeService, setActiveService] = useState("hair");
   const [activeSubService, setActiveSubService] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const navigate = useNavigate();
+
+  // Check for password recovery hash on landing page
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && hash.includes("type=recovery")) {
+      // Redirect to auth page with the hash intact so it can handle it
+      navigate("/auth" + hash);
+    }
+  }, [navigate]);
 
   // Reset sub-service when main service changes
   useEffect(() => {
