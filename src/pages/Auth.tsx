@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import viollaLogo from "@/assets/violla-logo.jpg";
+import { supabase } from "@/integrations/supabase/client";
 
 const emailSchema = z.string().email("Невалидна е-пошта");
 const passwordSchema = z.string().min(6, "Лозинката мора да има минимум 6 карактери");
@@ -16,6 +17,7 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [view, setView] = useState<"login" | "reset">("login");
   
   const { signIn, user, isAdmin } = useAuth();
   const navigate = useNavigate();
@@ -38,16 +40,46 @@ const Auth = () => {
       }
     }
     
-    try {
-      passwordSchema.parse(password);
-    } catch (e) {
-      if (e instanceof z.ZodError) {
-        newErrors.password = e.errors[0].message;
+    if (view === "login") {
+      try {
+        passwordSchema.parse(password);
+      } catch (e) {
+        if (e instanceof z.ZodError) {
+          newErrors.password = e.errors[0].message;
+        }
       }
     }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth?type=recovery`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Проверете го вашето сандаче",
+        description: "Испративме линк за ресетирање на вашата е-пошта.",
+      });
+      setView("login");
+    } catch (error: any) {
+      toast({
+        title: "Грешка",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,13 +125,15 @@ const Auth = () => {
 
         <div className="salon-card p-6">
           <h1 className="text-2xl font-bold text-center text-foreground mb-2">
-            Админ Најава
+            {view === "login" ? "Админ Најава" : "Ресетирај Лозинка"}
           </h1>
           <p className="text-sm text-muted-foreground text-center mb-6">
-            Внесете ги вашите податоци
+            {view === "login" 
+              ? "Внесете ги вашите податоци" 
+              : "Внесете ја вашата е-пошта за да добиете линк"}
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={view === "login" ? handleSubmit : handleResetPassword} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Е-пошта</Label>
               <Input
@@ -115,28 +149,57 @@ const Auth = () => {
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Лозинка</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="bg-background"
-              />
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password}</p>
-              )}
-            </div>
+            {view === "login" && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Лозинка</Label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setView("reset");
+                      setErrors({});
+                    }}
+                    className="text-xs text-muted-foreground hover:text-accent underline"
+                  >
+                    Заборавена лозинка?
+                  </button>
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="bg-background"
+                />
+                {errors.password && (
+                  <p className="text-sm text-destructive">{errors.password}</p>
+                )}
+              </div>
+            )}
 
             <Button
               type="submit"
               className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
               disabled={loading}
             >
-              {loading ? "Чекајте..." : "Најави се"}
+              {loading 
+                ? "Чекајте..." 
+                : view === "login" ? "Најави се" : "Испрати линк"}
             </Button>
+
+            {view === "reset" && (
+              <button
+                type="button"
+                onClick={() => {
+                  setView("login");
+                  setErrors({});
+                }}
+                className="w-full text-sm text-muted-foreground hover:text-foreground mt-2"
+              >
+                Назад кон најава
+              </button>
+            )}
           </form>
         </div>
 
