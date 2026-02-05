@@ -440,8 +440,8 @@ const WeekCalendar = ({
                       />
                     ))}
 
-                    {/* Current time indicator */}
-                    {isTodayColumn && currentTimePosition !== null && (
+                    {/* Current time indicator - REMOVED */}
+                    {false && isTodayColumn && currentTimePosition !== null && (
                       <div
                         className="absolute left-0 right-0 z-20 flex items-center pointer-events-none"
                         style={{ top: currentTimePosition }}
