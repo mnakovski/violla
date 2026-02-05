@@ -462,7 +462,7 @@ const WeekCalendar = ({
 
                         return (
                           <HoverCard key={apt.id} openDelay={100} closeDelay={50}>
-                          <HoverCardTrigger asChild>
+                            <HoverCardTrigger asChild>
                             <div
                               className={cn(
                                 "absolute rounded-md border shadow-sm cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] hover:z-20 overflow-hidden",
@@ -512,8 +512,8 @@ const WeekCalendar = ({
                                 )}
                               </div>
                             </div>
-                          </HoverCardTrigger>
-                          <HoverCardContent
+                            </HoverCardTrigger>
+                            <HoverCardContent
                             side="right"
                             align="start"
                             className="w-64 p-3"
@@ -555,7 +555,8 @@ const WeekCalendar = ({
                           </HoverCardContent>
                         </HoverCard>
                       );
-                    })}
+                    });
+                    })()}
                   </div>
                 </div>
               );
