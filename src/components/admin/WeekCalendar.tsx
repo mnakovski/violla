@@ -92,7 +92,17 @@ const WeekCalendar = ({
   }, [currentWeekStart]);
 
   // Mobile: show only some days
-  const [mobileStartIndex, setMobileStartIndex] = useState(0);
+  const [mobileStartIndex, setMobileStartIndex] = useState(() => {
+    // If mobile, start with Today
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 (Sun) to 6 (Sat)
+    // Convert to index: Mon=0, Tue=1, ... Sat=5, Sun=ignore/clamp
+    // Monday(1) -> 0
+    const index = dayOfWeek === 0 ? 5 : dayOfWeek - 1;
+    // Clamp to ensure we don't go out of bounds (max index depends on mobileViewDays, but safe to start at today)
+    // If it's Sunday (0), we show Saturday (5) or start of next week? Let's show Saturday for now.
+    return Math.max(0, Math.min(index, 5));
+  });
   const visibleDays = useMemo(() => {
     if (!isMobile) return weekDays;
     return weekDays.slice(mobileStartIndex, mobileStartIndex + mobileViewDays);
