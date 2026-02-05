@@ -2,76 +2,77 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Violla Salon Design System - Elegant slate blue & champagne gold */
+/* Violla Salon Design System - Coral, Teal & Slate from logo */
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap');
 
 @layer base {
   :root {
-    /* Dark theme - Deep charcoal with champagne gold accents */
-    --background: 220 15% 10%;
-    --foreground: 40 20% 90%;
+    /* Light theme - Clean cream background with coral/teal accents */
+    --background: 45 33% 97%;
+    --foreground: 210 29% 24%;
 
-    /* Cards - slightly lighter than background */
-    --card: 220 15% 14%;
-    --card-foreground: 40 20% 90%;
+    /* Cards - white with subtle warmth */
+    --card: 0 0% 100%;
+    --card-foreground: 210 29% 24%;
 
     /* Popover */
-    --popover: 220 15% 12%;
-    --popover-foreground: 40 20% 90%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 29% 24%;
 
-    /* Primary - Champagne gold */
-    --primary: 38 45% 55%;
-    --primary-foreground: 220 15% 10%;
+    /* Primary - Coral/Peach from logo (#E68A73) */
+    --primary: 12 68% 68%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Dark slate */
-    --secondary: 220 12% 18%;
-    --secondary-foreground: 40 20% 85%;
+    /* Secondary - Soft Teal from logo (#7FB3B0) */
+    --secondary: 177 26% 60%;
+    --secondary-foreground: 210 29% 20%;
 
-    /* Muted */
-    --muted: 220 10% 20%;
-    --muted-foreground: 220 10% 55%;
+    /* Muted - Light gray with warmth */
+    --muted: 45 20% 92%;
+    --muted-foreground: 210 15% 45%;
 
-    /* Accent - Champagne gold */
-    --accent: 38 45% 55%;
-    --accent-foreground: 220 15% 10%;
+    /* Accent - Soft Teal */
+    --accent: 177 26% 60%;
+    --accent-foreground: 210 29% 20%;
 
     /* Destructive */
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders - Dark silver */
-    --border: 220 10% 22%;
-    --input: 220 12% 20%;
-    --ring: 38 45% 55%;
+    /* Borders - Soft teal tint */
+    --border: 177 15% 85%;
+    --input: 177 15% 90%;
+    --ring: 12 68% 68%;
 
     --radius: 0.75rem;
 
     /* Custom salon tokens */
-    --salon-dark: 220 15% 8%;
-    --salon-charcoal: 220 15% 14%;
-    --salon-champagne: 38 45% 55%;
-    --salon-champagne-light: 38 50% 70%;
-    --salon-champagne-dark: 38 40% 40%;
-    --salon-silver: 220 10% 45%;
-    --salon-cream: 40 30% 90%;
+    --salon-coral: 12 68% 68%;
+    --salon-coral-light: 12 70% 78%;
+    --salon-coral-dark: 12 60% 55%;
+    --salon-teal: 177 26% 60%;
+    --salon-teal-light: 177 30% 75%;
+    --salon-teal-dark: 177 30% 45%;
+    --salon-slate: 210 29% 24%;
+    --salon-cream: 45 33% 97%;
 
     /* Gradients */
-    --gradient-header: linear-gradient(180deg, hsl(220 15% 8%) 0%, hsl(220 15% 12%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(38 45% 55%) 0%, hsl(38 50% 65%) 100%);
+    --gradient-header: linear-gradient(180deg, hsl(210 29% 24%) 0%, hsl(210 29% 28%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(12 68% 68%) 0%, hsl(12 70% 75%) 100%);
 
     /* Shadows */
-    --shadow-soft: 0 4px 20px -4px hsl(0 0% 0% / 0.4);
-    --shadow-card: 0 2px 12px -2px hsl(0 0% 0% / 0.3);
+    --shadow-soft: 0 4px 20px -4px hsl(210 29% 24% / 0.1);
+    --shadow-card: 0 2px 12px -2px hsl(210 29% 24% / 0.08);
 
-    --sidebar-background: 220 15% 10%;
-    --sidebar-foreground: 40 20% 90%;
-    --sidebar-primary: 38 45% 55%;
-    --sidebar-primary-foreground: 220 15% 10%;
-    --sidebar-accent: 220 12% 18%;
-    --sidebar-accent-foreground: 40 20% 85%;
-    --sidebar-border: 220 10% 22%;
-    --sidebar-ring: 38 45% 55%;
+    --sidebar-background: 210 29% 24%;
+    --sidebar-foreground: 45 33% 97%;
+    --sidebar-primary: 12 68% 68%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 177 26% 60%;
+    --sidebar-accent-foreground: 210 29% 20%;
+    --sidebar-border: 210 20% 35%;
+    --sidebar-ring: 12 68% 68%;
   }
 }
 
@@ -96,7 +97,7 @@
   }
 
   .salon-accent-text {
-    color: hsl(var(--salon-champagne));
+    color: hsl(var(--salon-coral));
   }
 
   .salon-card {
@@ -106,21 +107,22 @@
 
   .time-slot {
     @apply px-4 py-3 rounded-lg text-center transition-all duration-200;
-    @apply bg-secondary text-secondary-foreground;
+    @apply bg-muted text-foreground;
     @apply border border-border;
   }
 
   .time-slot-available {
-    @apply bg-card/80 border-2 border-salon-champagne/50;
-    box-shadow: 0 0 0 1px hsl(var(--salon-champagne) / 0.15);
+    @apply bg-card border-2 border-secondary/60;
+    box-shadow: 0 0 0 1px hsl(var(--salon-teal) / 0.15);
   }
 
   .time-slot-available:hover {
-    @apply border-salon-champagne/70 bg-card;
+    @apply border-secondary bg-card;
+    box-shadow: 0 0 0 2px hsl(var(--salon-teal) / 0.2);
   }
 
   .time-slot-unavailable {
-    @apply bg-muted/60 text-muted-foreground opacity-40 border-transparent;
+    @apply bg-muted/50 text-muted-foreground opacity-50 border-transparent;
     cursor: not-allowed;
   }
 
@@ -136,7 +138,7 @@
 
   .contact-btn-accent {
     background: var(--gradient-accent);
-    @apply text-primary;
+    @apply text-white;
     @apply hover:opacity-90 active:scale-[0.98];
   }
 

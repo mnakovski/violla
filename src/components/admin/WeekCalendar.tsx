@@ -42,19 +42,19 @@ const serviceLabels: Record<string, string> = {
 
 const serviceColors: Record<string, { bg: string; border: string; text: string }> = {
   hair: {
-    bg: "bg-primary/20",
-    border: "border-primary/40",
-    text: "text-primary",
+    bg: "bg-primary/25",
+    border: "border-primary/60",
+    text: "text-salon-coral-dark",
   },
   nails: {
-    bg: "bg-pink-500/20",
-    border: "border-pink-500/40",
-    text: "text-pink-400",
+    bg: "bg-secondary/30",
+    border: "border-secondary/70",
+    text: "text-salon-teal-dark",
   },
   waxing: {
-    bg: "bg-violet-500/20",
-    border: "border-violet-500/40",
-    text: "text-violet-400",
+    bg: "bg-purple-500/20",
+    border: "border-purple-500/50",
+    text: "text-purple-700",
   },
 };
 
