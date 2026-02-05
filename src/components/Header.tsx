@@ -1,4 +1,4 @@
-import viollaLogo from "@/assets/violla-logo.jpg";
+import viollaLogo from "@/assets/new-logo.jpg";
 
 const Header = () => {
   return (
