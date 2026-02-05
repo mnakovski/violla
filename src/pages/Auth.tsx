@@ -27,7 +27,11 @@ const Auth = () => {
   useEffect(() => {
     // Check if user is here for password recovery
     const type = searchParams.get("type");
-    if (type === "recovery") {
+    // Also check hash for type=recovery (Supabase sometimes puts it there)
+    const hashParams = new URLSearchParams(window.location.hash.substring(1)); // remove #
+    const typeFromHash = hashParams.get("type");
+
+    if (type === "recovery" || typeFromHash === "recovery") {
       setView("update");
     } else if (user && isAdmin) {
       navigate("/admin");
