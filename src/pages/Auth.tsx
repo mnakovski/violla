@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,30 +17,37 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-  const [view, setView] = useState<"login" | "reset">("login");
+  const [view, setView] = useState<"login" | "reset" | "update">("login");
   
   const { signIn, user, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user && isAdmin) {
+    // Check if user is here for password recovery
+    const type = searchParams.get("type");
+    if (type === "recovery") {
+      setView("update");
+    } else if (user && isAdmin) {
       navigate("/admin");
     }
-  }, [user, isAdmin, navigate]);
+  }, [user, isAdmin, navigate, searchParams]);
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
     
-    try {
-      emailSchema.parse(email);
-    } catch (e) {
-      if (e instanceof z.ZodError) {
-        newErrors.email = e.errors[0].message;
+    if (view === "login" || view === "reset") {
+      try {
+        emailSchema.parse(email);
+      } catch (e) {
+        if (e instanceof z.ZodError) {
+          newErrors.email = e.errors[0].message;
+        }
       }
     }
     
-    if (view === "login") {
+    if (view === "login" || view === "update") {
       try {
         passwordSchema.parse(password);
       } catch (e) {
@@ -82,6 +89,32 @@ const Auth = () => {
     }
   };
 
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: password });
+
+      if (error) throw error;
+
+      toast({
+        title: "Успешно",
+        description: "Вашата лозинка е променета. Најавени сте.",
+      });
+      navigate("/admin");
+    } catch (error: any) {
+      toast({
+        title: "Грешка",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -111,6 +144,30 @@ const Auth = () => {
     }
   };
 
+  const getTitle = () => {
+    switch (view) {
+      case "login": return "Админ Најава";
+      case "reset": return "Ресетирај Лозинка";
+      case "update": return "Нова Лозинка";
+    }
+  };
+
+  const getDescription = () => {
+    switch (view) {
+      case "login": return "Внесете ги вашите податоци";
+      case "reset": return "Внесете ја вашата е-пошта за да добиете линк";
+      case "update": return "Внесете ја вашата нова лозинка";
+    }
+  };
+
+  const getSubmitHandler = (e: React.FormEvent) => {
+    switch (view) {
+      case "login": return handleSubmit(e);
+      case "reset": return handleResetPassword(e);
+      case "update": return handleUpdatePassword(e);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm">
@@ -125,44 +182,48 @@ const Auth = () => {
 
         <div className="salon-card p-6">
           <h1 className="text-2xl font-bold text-center text-foreground mb-2">
-            {view === "login" ? "Админ Најава" : "Ресетирај Лозинка"}
+            {getTitle()}
           </h1>
           <p className="text-sm text-muted-foreground text-center mb-6">
-            {view === "login" 
-              ? "Внесете ги вашите податоци" 
-              : "Внесете ја вашата е-пошта за да добиете линк"}
+            {getDescription()}
           </p>
 
-          <form onSubmit={view === "login" ? handleSubmit : handleResetPassword} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Е-пошта</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="example@mail.com"
-                className="bg-background"
-              />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email}</p>
-              )}
-            </div>
+          <form onSubmit={getSubmitHandler} className="space-y-4">
+            {view !== "update" && (
+              <div className="space-y-2">
+                <Label htmlFor="email">Е-пошта</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="example@mail.com"
+                  className="bg-background"
+                />
+                {errors.email && (
+                  <p className="text-sm text-destructive">{errors.email}</p>
+                )}
+              </div>
+            )}
 
-            {view === "login" && (
+            {(view === "login" || view === "update") && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Лозинка</Label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setView("reset");
-                      setErrors({});
-                    }}
-                    className="text-xs text-muted-foreground hover:text-accent underline"
-                  >
-                    Заборавена лозинка?
-                  </button>
+                  <Label htmlFor="password">
+                    {view === "update" ? "Нова Лозинка" : "Лозинка"}
+                  </Label>
+                  {view === "login" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setView("reset");
+                        setErrors({});
+                      }}
+                      className="text-xs text-muted-foreground hover:text-accent underline"
+                    >
+                      Заборавена лозинка?
+                    </button>
+                  )}
                 </div>
                 <Input
                   id="password"
@@ -185,7 +246,7 @@ const Auth = () => {
             >
               {loading 
                 ? "Чекајте..." 
-                : view === "login" ? "Најави се" : "Испрати линк"}
+                : view === "login" ? "Најави се" : view === "reset" ? "Испрати линк" : "Зачувај"}
             </Button>
 
             {view === "reset" && (
