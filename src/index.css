@@ -2,76 +2,77 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Violla Salon Design System - Elegant slate blue & champagne gold */
+/* Violla Salon Design System - Dark theme with Coral & Teal accents */
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap');
 
 @layer base {
   :root {
-    /* Dark theme - Deep charcoal with champagne gold accents */
-    --background: 220 15% 10%;
-    --foreground: 40 20% 90%;
+    /* Dark theme - Deep slate with Coral & Teal accents */
+    --background: 210 29% 24%;
+    --foreground: 40 30% 95%;
 
     /* Cards - slightly lighter than background */
-    --card: 220 15% 14%;
-    --card-foreground: 40 20% 90%;
+    --card: 210 25% 20%;
+    --card-foreground: 40 30% 95%;
 
     /* Popover */
-    --popover: 220 15% 12%;
-    --popover-foreground: 40 20% 90%;
+    --popover: 210 25% 18%;
+    --popover-foreground: 40 30% 95%;
 
-    /* Primary - Champagne gold */
-    --primary: 38 45% 55%;
-    --primary-foreground: 220 15% 10%;
+    /* Primary - Coral #E68A73 */
+    --primary: 12 68% 68%;
+    --primary-foreground: 210 29% 15%;
 
-    /* Secondary - Dark slate */
-    --secondary: 220 12% 18%;
-    --secondary-foreground: 40 20% 85%;
+    /* Secondary - Teal #7FB3B0 */
+    --secondary: 177 27% 60%;
+    --secondary-foreground: 210 29% 15%;
 
     /* Muted */
-    --muted: 220 10% 20%;
-    --muted-foreground: 220 10% 55%;
+    --muted: 210 20% 25%;
+    --muted-foreground: 210 15% 60%;
 
-    /* Accent - Champagne gold */
-    --accent: 38 45% 55%;
-    --accent-foreground: 220 15% 10%;
+    /* Accent - Coral */
+    --accent: 12 68% 68%;
+    --accent-foreground: 210 29% 15%;
 
     /* Destructive */
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders - Dark silver */
-    --border: 220 10% 22%;
-    --input: 220 12% 20%;
-    --ring: 38 45% 55%;
+    /* Borders - Teal tinted */
+    --border: 177 15% 30%;
+    --input: 210 20% 22%;
+    --ring: 12 68% 68%;
 
     --radius: 0.75rem;
 
     /* Custom salon tokens */
-    --salon-dark: 220 15% 8%;
-    --salon-charcoal: 220 15% 14%;
-    --salon-champagne: 38 45% 55%;
-    --salon-champagne-light: 38 50% 70%;
-    --salon-champagne-dark: 38 40% 40%;
-    --salon-silver: 220 10% 45%;
-    --salon-cream: 40 30% 90%;
+    --salon-dark: 210 29% 18%;
+    --salon-charcoal: 210 25% 22%;
+    --salon-coral: 12 68% 68%;
+    --salon-coral-light: 12 70% 78%;
+    --salon-coral-dark: 12 60% 55%;
+    --salon-teal: 177 27% 60%;
+    --salon-teal-light: 177 35% 70%;
+    --salon-cream: 40 30% 92%;
 
     /* Gradients */
-    --gradient-header: linear-gradient(180deg, hsl(220 15% 8%) 0%, hsl(220 15% 12%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(38 45% 55%) 0%, hsl(38 50% 65%) 100%);
+    --gradient-header: linear-gradient(180deg, hsl(210 29% 20%) 0%, hsl(210 25% 24%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(12 68% 68%) 0%, hsl(12 70% 75%) 100%);
 
     /* Shadows */
     --shadow-soft: 0 4px 20px -4px hsl(0 0% 0% / 0.4);
     --shadow-card: 0 2px 12px -2px hsl(0 0% 0% / 0.3);
 
-    --sidebar-background: 220 15% 10%;
-    --sidebar-foreground: 40 20% 90%;
-    --sidebar-primary: 38 45% 55%;
-    --sidebar-primary-foreground: 220 15% 10%;
-    --sidebar-accent: 220 12% 18%;
-    --sidebar-accent-foreground: 40 20% 85%;
-    --sidebar-border: 220 10% 22%;
-    --sidebar-ring: 38 45% 55%;
+    --sidebar-background: 210 29% 20%;
+    --sidebar-foreground: 40 30% 95%;
+    --sidebar-primary: 12 68% 68%;
+    --sidebar-primary-foreground: 210 29% 15%;
+    --sidebar-accent: 177 27% 60%;
+    --sidebar-accent-foreground: 210 29% 15%;
+    --sidebar-border: 177 15% 30%;
+    --sidebar-ring: 12 68% 68%;
   }
 }
 
@@ -111,12 +112,12 @@
   }
 
   .time-slot-available {
-    @apply bg-card/80 border-2 border-salon-champagne/50;
-    box-shadow: 0 0 0 1px hsl(var(--salon-champagne) / 0.15);
+    @apply bg-card/80 border-2 border-salon-coral/50;
+    box-shadow: 0 0 0 1px hsl(var(--salon-coral) / 0.15);
   }
 
   .time-slot-available:hover {
-    @apply border-salon-champagne/70 bg-card;
+    @apply border-salon-coral/70 bg-card;
   }
 
   .time-slot-unavailable {
