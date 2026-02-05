@@ -256,29 +256,29 @@ const Admin = () => {
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-6 overflow-x-hidden">
       {/* Header */}
-      <header className="sticky top-0 z-50 salon-header backdrop-blur-sm border-b border-border/30 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between text-white">
-          <div className="flex items-center gap-3 text-white">
+      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border/50 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
             <img
               src={viollaLogo}
               alt="Violla"
-              className="w-10 h-10 rounded-full object-cover border-2 border-white/30 shadow-md"
+              className="w-10 h-10 rounded-full object-cover border-2 border-accent/40 shadow-md"
             />
             <h1 
-              className="text-xl tracking-wide"
+              className="text-xl text-foreground tracking-wide"
               style={{ fontFamily: "'Playfair Display', serif" }}
             >
               Violla
             </h1>
-            <span className="hidden sm:inline-block text-xs text-white/70 bg-white/10 px-2 py-0.5 rounded-full">
+            <span className="hidden sm:inline-block text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">
               Админ
             </span>
           </div>
-          <div className="flex items-center gap-1 bg-white/10 rounded-lg p-1">
+          <div className="flex items-center gap-1 bg-muted/30 rounded-lg p-1">
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 hover:bg-white/20 text-white"
+              className="h-8 w-8 hover:bg-background/50"
               onClick={() => navigate("/")}
               title="Почетна"
             >
@@ -287,7 +287,7 @@ const Admin = () => {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 hover:bg-white/20 text-white"
+              className="h-8 w-8 hover:bg-background/50"
               onClick={handleSignOut}
               title="Одјави се"
             >
@@ -301,7 +301,7 @@ const Admin = () => {
         {/* Actions */}
         <div className="flex justify-between items-center mb-4 sm:mb-6">
           <h2 className="text-xl font-semibold text-foreground">Термини</h2>
-          <Button onClick={() => handleOpenDialog()} className="bg-primary hover:bg-primary/90 shadow-md">
+          <Button onClick={() => handleOpenDialog()} className="bg-accent hover:bg-accent/90 shadow-md">
             <Plus className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">Додај термин</span>
             <span className="sm:hidden">Додај</span>
@@ -473,7 +473,7 @@ const Admin = () => {
             <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="h-11">
               Откажи
             </Button>
-            <Button onClick={handleSubmit} className="bg-primary hover:bg-primary/90 h-11">
+            <Button onClick={handleSubmit} className="bg-accent hover:bg-accent/90 h-11">
               {editingAppointment ? "Зачувај промени" : "Креирај термин"}
             </Button>
           </DialogFooter>
