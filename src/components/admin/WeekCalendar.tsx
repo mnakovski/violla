@@ -147,12 +147,93 @@ const WeekCalendar = ({
   };
 
   // Calculate position and height for an appointment
-  const getAppointmentStyle = (apt: Appointment) => {
+  const getAppointmentGeometry = (apt: Appointment) => {
     const [hours, minutes] = apt.start_time.split(":").map(Number);
     const startMinutes = (hours - 8) * 60 + minutes;
+    const endMinutes = startMinutes + apt.duration_minutes;
     const top = (startMinutes / 15) * SLOT_HEIGHT;
     const height = (apt.duration_minutes / 15) * SLOT_HEIGHT;
-    return { top, height: Math.max(height, SLOT_HEIGHT) };
+    return { top, height: Math.max(height, SLOT_HEIGHT), startMinutes, endMinutes };
+  };
+
+  // Group overlapping appointments and calculate layout
+  const getDayLayout = (dayAppointments: Appointment[]) => {
+    if (dayAppointments.length === 0) return {};
+
+    // 1. Sort by start time, then duration
+    const sorted = [...dayAppointments].sort((a, b) => {
+      const aStart = getAppointmentGeometry(a).startMinutes;
+      const bStart = getAppointmentGeometry(b).startMinutes;
+      if (aStart !== bStart) return aStart - bStart;
+      return b.duration_minutes - a.duration_minutes;
+    });
+
+    // 2. Group into connected clusters
+    const clusters: Appointment[][] = [];
+    let currentCluster: Appointment[] = [];
+    let clusterEnd = -1;
+
+    sorted.forEach((apt) => {
+      const { startMinutes, endMinutes } = getAppointmentGeometry(apt);
+      
+      if (currentCluster.length === 0) {
+        currentCluster.push(apt);
+        clusterEnd = endMinutes;
+      } else {
+        // If this appointment starts after the current cluster ends, seal the cluster
+        if (startMinutes >= clusterEnd) {
+          clusters.push(currentCluster);
+          currentCluster = [apt];
+          clusterEnd = endMinutes;
+        } else {
+          // Overlap (or adjacent) - add to cluster
+          currentCluster.push(apt);
+          clusterEnd = Math.max(clusterEnd, endMinutes);
+        }
+      }
+    });
+    if (currentCluster.length > 0) clusters.push(currentCluster);
+
+    // 3. Layout each cluster
+    const layout: Record<string, { left: string; width: string }> = {};
+
+    clusters.forEach((cluster) => {
+      const columns: Appointment[][] = [];
+
+      cluster.forEach((apt) => {
+        let placed = false;
+        // Try to fit in existing columns
+        for (let i = 0; i < columns.length; i++) {
+          const col = columns[i];
+          const lastInCol = col[col.length - 1];
+          const lastEnd = getAppointmentGeometry(lastInCol).endMinutes;
+          const currentStart = getAppointmentGeometry(apt).startMinutes;
+
+          if (currentStart >= lastEnd) {
+            col.push(apt);
+            placed = true;
+            break;
+          }
+        }
+        // If didn't fit, start new column
+        if (!placed) {
+          columns.push([apt]);
+        }
+      });
+
+      const widthPercent = 100 / columns.length;
+      
+      columns.forEach((col, colIndex) => {
+        col.forEach((apt) => {
+          layout[apt.id] = {
+            left: `${colIndex * widthPercent}%`,
+            width: `${widthPercent}%`,
+          };
+        });
+      });
+    });
+
+    return layout;
   };
 
   // Get current time position
@@ -260,6 +341,25 @@ const WeekCalendar = ({
         )}
       </div>
 
+      {/* Legend */}
+      <div className="px-4 py-2 border-b border-border bg-muted/20 flex flex-wrap gap-4 justify-center sm:justify-start">
+        {Object.entries(serviceLabels).map(([key, label]) => {
+          const colors = serviceColors[key];
+          return (
+            <div key={key} className="flex items-center gap-1.5">
+              <div
+                className={cn(
+                  "w-3 h-3 rounded-sm border",
+                  colors.bg,
+                  colors.border
+                )}
+              />
+              <span className="text-xs text-muted-foreground">{label}</span>
+            </div>
+          );
+        })}
+      </div>
+
       {/* Calendar grid */}
       <div className="flex">
         {/* Time column */}
@@ -352,21 +452,30 @@ const WeekCalendar = ({
                     )}
 
                     {/* Appointments */}
-                    {dayAppointments.map((apt) => {
-                      const { top, height } = getAppointmentStyle(apt);
-                      const colors = serviceColors[apt.service_type] || serviceColors.hair;
-                      const isShort = height <= SLOT_HEIGHT * 2;
+                    {(() => {
+                      const layoutMap = getDayLayout(dayAppointments);
+                      return dayAppointments.map((apt) => {
+                        const { top, height } = getAppointmentGeometry(apt);
+                        const layoutStyle = layoutMap[apt.id] || { left: "0%", width: "100%" };
+                        const colors = serviceColors[apt.service_type] || serviceColors.hair;
+                        const isShort = height <= SLOT_HEIGHT * 2;
 
-                      return (
-                        <HoverCard key={apt.id} openDelay={100} closeDelay={50}>
+                        return (
+                          <HoverCard key={apt.id} openDelay={100} closeDelay={50}>
                           <HoverCardTrigger asChild>
                             <div
                               className={cn(
-                                "absolute left-1 right-1 rounded-md border shadow-sm cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] overflow-hidden",
+                                "absolute rounded-md border shadow-sm cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] hover:z-20 overflow-hidden",
                                 colors.bg,
                                 colors.border
                               )}
-                              style={{ top, height }}
+                              style={{ 
+                                top, 
+                                height,
+                                left: layoutStyle.left,
+                                width: layoutStyle.width,
+                                padding: "1px" // slight padding to prevent border merge
+                              }}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onAppointmentClick(apt);
@@ -453,25 +562,6 @@ const WeekCalendar = ({
             })}
           </div>
         </ScrollArea>
-      </div>
-
-      {/* Legend */}
-      <div className="p-3 border-t border-border flex flex-wrap gap-4 justify-center">
-        {Object.entries(serviceLabels).map(([key, label]) => {
-          const colors = serviceColors[key];
-          return (
-            <div key={key} className="flex items-center gap-1.5">
-              <div
-                className={cn(
-                  "w-3 h-3 rounded-sm border",
-                  colors.bg,
-                  colors.border
-                )}
-              />
-              <span className="text-xs text-muted-foreground">{label}</span>
-            </div>
-          );
-        })}
       </div>
     </div>
   );
