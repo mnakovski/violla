@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 
 // Full appointment type (admin only)
-export type Appointment = {
+export interface Appointment {
   id: string;
   customer_name?: string;
   client_phone?: string;
@@ -14,16 +14,16 @@ export type Appointment = {
   notes: string | null;
   created_at: string;
   updated_at: string;
-};
+}
 
 // Public appointment type (no sensitive fields)
-export type PublicAppointment = {
+export interface PublicAppointment {
   id: string;
   service_type: "hair" | "nails" | "waxing";
   appointment_date: string;
   start_time: string;
   duration_minutes: number;
-};
+}
 
 export const useAppointments = (date?: Date, serviceType?: string) => {
   const [appointments, setAppointments] = useState<PublicAppointment[]>([]);
@@ -86,4 +86,168 @@ export const useAppointments = (date?: Date, serviceType?: string) => {
   }, [fetchAppointments]);
 
   return { appointments, loading, error, refetch: fetchAppointments };
+};
+
+export const useAdminAppointments = () => {
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchAllAppointments = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("appointments")
+        .select("*")
+        .order("appointment_date", { ascending: true })
+        .order("start_time", { ascending: true });
+      
+      if (error) throw error;
+      setAppointments(data || []);
+    } catch (err) {
+      setError(err as Error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const createAppointment = async (appointment: {
+    customer_name?: string;
+    client_phone?: string;
+    service_type: "hair" | "nails" | "waxing";
+    appointment_date: string;
+    start_time: string;
+    duration_minutes: number;
+    notes?: string;
+  }) => {
+    // Check for overlapping appointments
+    const { data: hasOverlap } = await supabase.rpc("check_appointment_overlap", {
+      p_date: appointment.appointment_date,
+      p_start_time: appointment.start_time,
+      p_duration: appointment.duration_minutes,
+      p_service_type: appointment.service_type,
+    });
+
+    if (hasOverlap) {
+      throw new Error("Овој термин се преклопува со постоечки термин");
+    }
+
+    // Use standard insert, bypassing RPC issues
+    const { error } = await supabase.from("appointments").insert({
+      customer_name: appointment.customer_name || "Unknown",
+      client_phone: appointment.client_phone || null,
+      service_type: appointment.service_type,
+      appointment_date: appointment.appointment_date,
+      start_time: appointment.start_time,
+      duration_minutes: appointment.duration_minutes,
+      notes: appointment.notes || null
+    });
+
+    if (error) {
+      console.error("Insert Error:", error);
+      throw error;
+    }
+    await fetchAllAppointments();
+  };
+
+  const updateAppointment = async (
+    id: string,
+    updates: Partial<Omit<Appointment, "id" | "created_at" | "updated_at">>
+  ) => {
+    // Check for overlapping appointments (excluding current one)
+    if (updates.appointment_date || updates.start_time || updates.duration_minutes) {
+      const current = appointments.find((a) => a.id === id);
+      if (current) {
+        const { data: hasOverlap } = await supabase.rpc("check_appointment_overlap", {
+          p_date: updates.appointment_date || current.appointment_date,
+          p_start_time: updates.start_time || current.start_time,
+          p_duration: updates.duration_minutes || current.duration_minutes,
+          p_service_type: (updates.service_type || current.service_type) as "hair" | "nails" | "waxing",
+          p_exclude_id: id,
+        });
+
+        if (hasOverlap) {
+          throw new Error("Овој термин се преклопува со постоечки термин");
+        }
+      }
+    }
+
+    const { error } = await supabase
+      .from("appointments")
+      .update(updates)
+      .eq("id", id);
+    if (error) throw error;
+    await fetchAllAppointments();
+  };
+
+  const deleteAppointment = async (id: string) => {
+    const { error } = await supabase.from("appointments").delete().eq("id", id);
+    if (error) throw error;
+    await fetchAllAppointments();
+  };
+
+  useEffect(() => {
+    fetchAllAppointments();
+
+    // Subscribe to realtime changes for admin panel
+    const channel = supabase
+      .channel('admin-appointments')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments',
+        },
+        () => {
+          fetchAllAppointments();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchAllAppointments]);
+
+  return {
+    appointments,
+    loading,
+    error,
+    refetch: fetchAllAppointments,
+    createAppointment,
+    updateAppointment,
+    deleteAppointment,
+  };
+};
+
+// Helper to get occupied time slots for a given date and service
+export const getOccupiedSlots = (
+  appointments: PublicAppointment[],
+  date: Date,
+  serviceType: string
+): Set<string> => {
+  const dateStr = format(date, "yyyy-MM-dd");
+  const occupiedSlots = new Set<string>();
+
+  appointments
+    .filter(
+      (apt) =>
+        apt.appointment_date === dateStr &&
+        apt.service_type === serviceType
+    )
+    .forEach((apt) => {
+      // Parse start time and mark all slots covered by the appointment
+      const startTime = parse(apt.start_time, "HH:mm:ss", new Date());
+      // Divide duration by 15 to get number of 15-min slots needed
+      const slotsNeeded = apt.duration_minutes / 15;
+      
+      for (let i = 0; i < slotsNeeded; i++) {
+        const slotTime = new Date(startTime);
+        slotTime.setMinutes(slotTime.getMinutes() + i * 15);
+        occupiedSlots.add(format(slotTime, "HH:mm"));
+      }
+    });
+
+  return occupiedSlots;
 };
