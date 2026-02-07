@@ -111,6 +111,30 @@ export const useAdminAppointments = () => {
     }
   }, []);
 
+  const checkOverlap = async (
+    date: string,
+    startTime: string,
+    duration: number,
+    serviceType: "hair" | "nails" | "waxing",
+    excludeId?: string
+  ) => {
+    const { data: hasOverlap, error } = await supabase.rpc("check_appointment_overlap", {
+      p_date: date,
+      p_start_time: startTime,
+      p_duration: duration,
+      p_service_type: serviceType,
+      p_exclude_id: excludeId || null
+    });
+    
+    if (error) {
+      console.error("Overlap Check Error:", error);
+      // Fail safe: If check fails, assume no overlap but log it
+      return false;
+    }
+    
+    return !!hasOverlap;
+  };
+
   const createAppointment = async (appointment: {
     customer_name?: string;
     client_phone?: string;
@@ -120,19 +144,9 @@ export const useAdminAppointments = () => {
     duration_minutes: number;
     notes?: string;
   }) => {
-    // Check for overlapping appointments
-    const { data: hasOverlap } = await supabase.rpc("check_appointment_overlap", {
-      p_date: appointment.appointment_date,
-      p_start_time: appointment.start_time,
-      p_duration: appointment.duration_minutes,
-      p_service_type: appointment.service_type,
-    });
+    // Removed internal check to allow "soft warning" in UI
+    // The UI must call checkOverlap first and ask for confirmation
 
-    if (hasOverlap) {
-      throw new Error("Овој термин се преклопува со постоечки термин");
-    }
-
-    // Use standard insert, bypassing RPC issues
     const { error } = await supabase.from("appointments").insert({
       customer_name: appointment.customer_name || "Unknown",
       client_phone: appointment.client_phone || null,
@@ -154,23 +168,7 @@ export const useAdminAppointments = () => {
     id: string,
     updates: Partial<Omit<Appointment, "id" | "created_at" | "updated_at">>
   ) => {
-    // Check for overlapping appointments (excluding current one)
-    if (updates.appointment_date || updates.start_time || updates.duration_minutes) {
-      const current = appointments.find((a) => a.id === id);
-      if (current) {
-        const { data: hasOverlap } = await supabase.rpc("check_appointment_overlap", {
-          p_date: updates.appointment_date || current.appointment_date,
-          p_start_time: updates.start_time || current.start_time,
-          p_duration: updates.duration_minutes || current.duration_minutes,
-          p_service_type: (updates.service_type || current.service_type) as "hair" | "nails" | "waxing",
-          p_exclude_id: id,
-        });
-
-        if (hasOverlap) {
-          throw new Error("Овој термин се преклопува со постоечки термин");
-        }
-      }
-    }
+    // Removed internal check here too
 
     const { error } = await supabase
       .from("appointments")
@@ -215,6 +213,7 @@ export const useAdminAppointments = () => {
     loading,
     error,
     refetch: fetchAllAppointments,
+    checkOverlap,
     createAppointment,
     updateAppointment,
     deleteAppointment,
