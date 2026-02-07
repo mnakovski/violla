@@ -6,6 +6,12 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+// DEBUG: Log connection details to console
+console.log('%c🔌 Supabase Connection:', 'background: #222; color: #bada55; font-size: 14px');
+console.log('URL:', SUPABASE_URL);
+// Only log first/last few chars of key for safety
+console.log('Key:', SUPABASE_PUBLISHABLE_KEY?.substring(0, 10) + '...');
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
