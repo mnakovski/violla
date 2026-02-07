@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { Plus, LogOut, Home, Calendar } from "lucide-react";
+import { Plus, LogOut, Home, Calendar, AlertTriangle } from "lucide-react";
 import viollaLogo from "@/assets/new-logo.jpg";
 import { SERVICE_OPTIONS } from "@/constants/services";
 import WeekCalendar from "@/components/admin/WeekCalendar";
@@ -84,8 +84,13 @@ const Admin = () => {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [isOverlapAlertOpen, setIsOverlapAlertOpen] = useState(false);
+  
   const [appointmentToDelete, setAppointmentToDelete] = useState<string | null>(null);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
+  
+  // Store form data to be submitted after confirmation
+  const [pendingSubmission, setPendingSubmission] = useState<any>(null);
   
   const [formData, setFormData] = useState({
     customer_name: "",
@@ -126,7 +131,6 @@ const Admin = () => {
       
       // Try to extract sub-service from notes
       let foundSubService = "";
-      // Simplified sub-service extraction based on your logic
       if (appointment.notes && appointment.notes.startsWith("[")) {
         const endIndex = appointment.notes.indexOf("]");
         if (endIndex > 1) {
@@ -160,56 +164,66 @@ const Admin = () => {
     setIsDialogOpen(true);
   };
 
-  const handleSubmit = async () => {
+  const executeSubmission = async (data: any) => {
     try {
-      // Check for overlap first
-      const hasOverlap = await checkOverlap(
-        formData.appointment_date,
-        formData.start_time,
-        formData.duration_minutes,
-        formData.service_type,
-        editingAppointment?.id // Exclude current if editing
-      );
-
-      if (hasOverlap) {
-        const confirmOverlap = window.confirm(
-          "ВНИМАНИЕ: Овој термин се преклопува со веќе постоечки термин за оваа услуга.\n\nДали сте сигурни дека сакате да продолжите?"
-        );
-        if (!confirmOverlap) {
-          return; // Stop if user cancels
-        }
-      }
-
-      const submissionData = {
-        customer_name: formData.customer_name,
-        client_phone: formData.client_phone,
-        service_type: formData.service_type,
-        appointment_date: formData.appointment_date,
-        start_time: formData.start_time,
-        duration_minutes: formData.duration_minutes,
-        notes: formData.notes
-      };
-
       if (editingAppointment) {
-        await updateAppointment(editingAppointment.id, submissionData);
+        await updateAppointment(editingAppointment.id, data);
         toast({
           title: "Успешно",
           description: "Терминот е ажуриран",
         });
       } else {
-        await createAppointment(submissionData);
+        await createAppointment(data);
         toast({
           title: "Успешно",
           description: "Терминот е додаден",
         });
       }
       setIsDialogOpen(false);
+      setPendingSubmission(null);
     } catch (error) {
       toast({
         title: "Грешка",
         description: (error as Error).message,
         variant: "destructive",
       });
+    }
+  };
+
+  const handleSubmit = async () => {
+    const submissionData = {
+      customer_name: formData.customer_name,
+      client_phone: formData.client_phone,
+      service_type: formData.service_type,
+      appointment_date: formData.appointment_date,
+      start_time: formData.start_time,
+      duration_minutes: formData.duration_minutes,
+      notes: formData.notes
+    };
+
+    // Check for overlap first
+    const hasOverlap = await checkOverlap(
+      formData.appointment_date,
+      formData.start_time,
+      formData.duration_minutes,
+      formData.service_type,
+      editingAppointment?.id // Exclude current if editing
+    );
+
+    if (hasOverlap) {
+      setPendingSubmission(submissionData);
+      setIsOverlapAlertOpen(true);
+      return;
+    }
+
+    // No overlap, proceed immediately
+    await executeSubmission(submissionData);
+  };
+
+  const handleConfirmOverlap = async () => {
+    if (pendingSubmission) {
+      setIsOverlapAlertOpen(false);
+      await executeSubmission(pendingSubmission);
     }
   };
 
@@ -325,6 +339,7 @@ const Admin = () => {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            {/* Form Fields - same as before */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Име на клиент</Label>
@@ -359,7 +374,7 @@ const Admin = () => {
                     setFormData({ 
                       ...formData, 
                       service_type: v as "hair" | "nails" | "waxing",
-                      sub_service: "" // Reset sub-service when category changes
+                      sub_service: "" 
                     })
                   }
                 >
@@ -508,6 +523,32 @@ const Admin = () => {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Избриши
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Overlap Confirmation Alert */}
+      <AlertDialog open={isOverlapAlertOpen} onOpenChange={setIsOverlapAlertOpen}>
+        <AlertDialogContent className="w-[90vw] max-w-md rounded-xl border-amber-500/50">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-2 text-amber-500 mb-2">
+              <AlertTriangle className="h-6 w-6" />
+              <AlertDialogTitle className="text-amber-500">Внимание: Преклопување</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-foreground">
+              Веќе постои термин во ова време за избраната категорија.
+              <br /><br />
+              Дали сте сигурни дека сакате да го додадете овој термин секако?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingSubmission(null)}>Откажи</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmOverlap}
+              className="bg-amber-500 hover:bg-amber-600 text-white"
+            >
+              Закажи секако
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
