@@ -1,59 +1,68 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { mk } from "date-fns/locale";
+import Header from "@/components/Header";
+import ServiceTabs from "@/components/ServiceTabs";
+import SubServiceSelect from "@/components/SubServiceSelect";
+import DatePicker from "@/components/DatePicker";
+import TimeSlots from "@/components/TimeSlots";
+import ContactBar from "@/components/ContactBar";
+import { SERVICE_OPTIONS } from "@/constants/services";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { SERVICE_OPTIONS } from "@/constants/services";
-import { useAppointments, Appointment } from "@/hooks/useAppointments";
 import { CheckCircle2, Phone, MessageCircle, Smartphone } from "lucide-react";
-import viollaLogo from "@/assets/new-logo.jpg";
-import WeekCalendar from "@/components/admin/WeekCalendar";
 
 const Index = () => {
+  const [activeService, setActiveService] = useState("hair");
+  const [activeSubService, setActiveSubService] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const navigate = useNavigate();
   const { toast } = useToast();
-  
-  // Public Filter State
-  const [activeCategory, setActiveCategory] = useState<"hair" | "nails" | "waxing">("hair");
-  const [currentDate, setCurrentDate] = useState(new Date());
 
-  // Fetch Appointments (Read-Only)
-  // We actually need ALL appointments to show occupied slots properly
-  // But we filter by date range inside WeekCalendar logic usually. 
-  // Let's reuse useAppointments which fetches public appointments.
-  const { appointments } = useAppointments(currentDate, "all"); 
-  
   // Request Dialog State
   const [isRequestOpen, setIsRequestOpen] = useState(false);
-  const [requestDate, setRequestDate] = useState<string>("");
   const [requestTime, setRequestTime] = useState<string>("");
-  const [requestService, setRequestService] = useState<string>("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [contactMethod, setContactMethod] = useState<"viber" | "whatsapp" | "sms">("viber");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // Handle slot click from Calendar
-  const handleSlotClick = (date: string, time: string) => {
-    setRequestDate(date);
+  // Check for password recovery hash on landing page
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && hash.includes("type=recovery")) {
+      navigate("/auth" + hash);
+    }
+  }, [navigate]);
+
+  // Reset sub-service when main service changes
+  useEffect(() => {
+    const serviceConfig = SERVICE_OPTIONS.find(s => s.id === activeService);
+    if (serviceConfig && serviceConfig.subServices.length > 0) {
+      setActiveSubService(serviceConfig.subServices[0].id);
+    } else {
+      setActiveSubService(null);
+    }
+  }, [activeService]);
+
+  const handleSlotSelect = (time: string) => {
     setRequestTime(time);
-    // Reset form
     setCustomerName("");
     setCustomerPhone("");
     setContactMethod("viber");
-    setRequestService("");
     setIsSuccess(false);
     setIsRequestOpen(true);
   };
 
   const handleSubmitRequest = async () => {
-    if (!requestService || !customerName || !customerPhone) {
+    if (!customerName || !customerPhone) {
       toast({ title: "Грешка", description: "Ве молиме пополнете ги сите полиња", variant: "destructive" });
       return;
     }
@@ -61,20 +70,19 @@ const Index = () => {
     setIsSubmitting(true);
     try {
       // Find sub-service label
-      const catConfig = SERVICE_OPTIONS.find(c => c.id === activeCategory);
-      const subConfig = catConfig?.subServices.find(s => s.id === requestService);
+      const catConfig = SERVICE_OPTIONS.find(c => c.id === activeService);
+      const subConfig = catConfig?.subServices.find(s => s.id === activeSubService);
       
-      // Construct notes with preference
       const contactLabel = contactMethod === "viber" ? "Viber" : contactMethod === "whatsapp" ? "WhatsApp" : "SMS";
-      const notes = `[${subConfig?.label || activeCategory}] (Pref: ${contactLabel})`;
+      const notes = `[${subConfig?.label || activeService}] (Pref: ${contactLabel})`;
 
       const { error } = await supabase.from("appointment_requests").insert({
         customer_name: customerName,
         client_phone: customerPhone,
-        service_type: activeCategory,
-        appointment_date: requestDate,
+        service_type: activeService,
+        appointment_date: format(selectedDate, "yyyy-MM-dd"),
         start_time: requestTime,
-        duration_minutes: 30, // Default assumption
+        duration_minutes: 30, // Default
         notes: notes,
       });
 
@@ -88,81 +96,73 @@ const Index = () => {
     }
   };
 
-  // Convert appointments to read-only format for WeekCalendar
-  // We want to show them as "Occupied" blocks without details
-  const publicAppointments = useMemo(() => {
-    return appointments.map(apt => ({
-      ...apt,
-      customer_name: "Зафатено", // Mask name
-      client_phone: "",
-      notes: "",
-      // Keep ID and time for layout
-    })) as Appointment[];
-  }, [appointments]);
-
   return (
-    <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border/50 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src={viollaLogo} className="w-9 h-9 rounded-full border border-border" alt="Logo" />
-            <span className="font-serif font-semibold text-lg tracking-wide">Violla</span>
+    <div className="min-h-screen bg-background pb-32 pt-0">
+      <Header />
+      
+      <main className="max-w-md mx-auto px-4 py-6 space-y-6">
+        {/* Service Selection */}
+        <section className="text-center space-y-4">
+          <div>
+            <h2 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
+              Избери категорија
+            </h2>
+            <div className="flex justify-center">
+              <ServiceTabs 
+                activeService={activeService} 
+                onServiceChange={setActiveService} 
+              />
+            </div>
           </div>
-          
-          {/* Category Switcher */}
-          <div className="flex gap-1 bg-muted/50 p-1 rounded-lg">
-            {(["hair", "nails", "waxing"] as const).map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`
-                  px-3 py-1.5 text-xs font-medium rounded-md transition-all
-                  ${activeCategory === cat 
-                    ? "bg-background text-foreground shadow-sm" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"}
-                `}
-              >
-                {cat === "hair" ? "Коса" : cat === "nails" ? "Нокти" : "Деп."}
-              </button>
-            ))}
+
+          {/* Sub Service Selection */}
+          <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+             <h3 className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
+              Избери услуга
+            </h3>
+            <SubServiceSelect 
+              activeService={activeService}
+              activeSubService={activeSubService}
+              onSubServiceChange={setActiveSubService}
+            />
           </div>
-        </div>
-      </header>
+        </section>
 
-      <main className="max-w-4xl mx-auto px-2 py-6">
-        <div className="mb-6 px-2">
-          <h1 className="text-2xl font-bold text-foreground mb-1">Закажете Термин</h1>
-          <p className="text-muted-foreground text-sm">
-            Изберете слободен термин од календарот за <strong>{activeCategory === "hair" ? "Коса" : activeCategory === "nails" ? "Нокти" : "Депилација"}</strong>.
-          </p>
-        </div>
+        {/* Date Selection */}
+        <section className="text-center">
+          <h2 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
+            Избери датум
+          </h2>
+          <div className="flex justify-center">
+            <DatePicker 
+              selectedDate={selectedDate} 
+              onDateChange={setSelectedDate} 
+            />
+          </div>
+        </section>
 
-        {/* Calendar */}
-        <WeekCalendar 
-          appointments={publicAppointments.filter(a => a.service_type === activeCategory)} // Show only relevant category slots occupied? 
-          // Actually, if a hairdresser is busy, they are busy. 
-          // But we don't track resources yet (Employee A vs Employee B). 
-          // Assuming single resource per category for simplicity or simple overlap check.
-          // Let's show ALL appointments as occupied to prevent double booking ANYONE if we assume 1 seat per category.
-          // Or better: filter by category if they are distinct resources.
-          // Miki said: "горе првично си стои на коса ама ако сакам си бирам нокти". 
-          // Usually salons have different people for different services.
-          // So filtering by category is correct.
-          
-          onSlotClick={handleSlotClick}
-          onAppointmentClick={() => {}} // No action on clicking occupied slots
-        />
+        {/* Time Slots */}
+        <section>
+          <TimeSlots 
+            selectedDate={selectedDate} 
+            activeService={activeService} 
+            onSlotSelect={handleSlotSelect}
+          />
+        </section>
       </main>
+
+      <ContactBar />
 
       {/* Request Dialog */}
       <Dialog open={isRequestOpen} onOpenChange={setIsRequestOpen}>
         <DialogContent className="w-[95vw] max-w-md rounded-xl">
           <DialogHeader>
-            <DialogTitle>{isSuccess ? "Барањето е испратено!" : "Детали за терминот"}</DialogTitle>
+            <DialogTitle>{isSuccess ? "Барањето е испратено!" : "Закажи Термин"}</DialogTitle>
             {!isSuccess && (
               <DialogDescription>
-                {requestDate && format(new Date(requestDate), "dd.MM.yyyy")} во {requestTime}
+                {format(selectedDate, "dd.MM.yyyy")} во {requestTime}
+                <br/>
+                {SERVICE_OPTIONS.find(s => s.id === activeService)?.subServices.find(sub => sub.id === activeSubService)?.label}
               </DialogDescription>
             )}
           </DialogHeader>
@@ -181,20 +181,6 @@ const Index = () => {
             </div>
           ) : (
             <div className="space-y-4 py-2">
-              <div className="space-y-2">
-                <Label>Услуга</Label>
-                <Select value={requestService} onValueChange={setRequestService}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Изберете услуга..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SERVICE_OPTIONS.find(c => c.id === activeCategory)?.subServices.map((sub) => (
-                      <SelectItem key={sub.id} value={sub.id}>{sub.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Име</Label>

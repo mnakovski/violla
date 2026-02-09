@@ -4,6 +4,7 @@ import { useAppointments, getOccupiedSlots } from "@/hooks/useAppointments";
 interface TimeSlotsProps {
   selectedDate: Date;
   activeService: string;
+  onSlotSelect?: (time: string) => void;
 }
 
 // Generate time slots from 08:00 to 20:00 (15 min intervals)
@@ -18,7 +19,7 @@ const generateTimeSlots = () => {
   return slots;
 };
 
-const TimeSlots = ({ selectedDate, activeService }: TimeSlotsProps) => {
+const TimeSlots = ({ selectedDate, activeService, onSlotSelect }: TimeSlotsProps) => {
   const isClosed = isSunday(selectedDate);
   const { appointments, loading } = useAppointments(selectedDate, activeService);
   
@@ -66,21 +67,25 @@ const TimeSlots = ({ selectedDate, activeService }: TimeSlotsProps) => {
           {timeSlots.map((time) => {
             const isOccupied = occupiedSlots.has(time);
             return (
-              <div
+              <button
                 key={time}
-                className={`time-slot text-xs py-1.5 ${
-                  isOccupied ? "time-slot-unavailable" : "time-slot-available"
+                onClick={() => !isOccupied && onSlotSelect && onSlotSelect(time)}
+                disabled={isOccupied}
+                className={`time-slot text-xs py-1.5 w-full transition-all active:scale-95 ${
+                  isOccupied 
+                    ? "time-slot-unavailable cursor-not-allowed opacity-50" 
+                    : "time-slot-available cursor-pointer hover:bg-accent hover:text-accent-foreground"
                 }`}
               >
                 <span className="font-medium">{time}</span>
-              </div>
+              </button>
             );
           })}
         </div>
       )}
 
       <p className="mt-4 text-xs text-center text-muted-foreground">
-        Контактирајте нè за да закажете термин
+        Кликнете на термин за да закажете
       </p>
     </div>
   );
