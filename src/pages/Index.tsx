@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import Header from "@/components/Header";
 import ServiceTabs from "@/components/ServiceTabs";
-import SubServiceSelect from "@/components/SubServiceSelect";
 import DatePicker from "@/components/DatePicker";
 import TimeSlots from "@/components/TimeSlots";
 import ContactBar from "@/components/ContactBar";
@@ -19,8 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, Phone, MessageCircle, Smartphone } from "lucide-react";
 
 const Index = () => {
-  const [activeService, setActiveService] = useState("hair");
-  const [activeSubService, setActiveSubService] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState("hair");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -28,9 +26,14 @@ const Index = () => {
   // Request Dialog State
   const [isRequestOpen, setIsRequestOpen] = useState(false);
   const [requestTime, setRequestTime] = useState<string>("");
+  
+  // Form Fields
+  const [formCategory, setFormCategory] = useState<string>("");
+  const [formService, setFormService] = useState<string>("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [contactMethod, setContactMethod] = useState<"viber" | "whatsapp" | "sms">("viber");
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -42,18 +45,11 @@ const Index = () => {
     }
   }, [navigate]);
 
-  // Reset sub-service when main service changes
-  useEffect(() => {
-    const serviceConfig = SERVICE_OPTIONS.find(s => s.id === activeService);
-    if (serviceConfig && serviceConfig.subServices.length > 0) {
-      setActiveSubService(serviceConfig.subServices[0].id);
-    } else {
-      setActiveSubService(null);
-    }
-  }, [activeService]);
-
   const handleSlotSelect = (time: string) => {
     setRequestTime(time);
+    // Pre-fill with current active category
+    setFormCategory(activeCategory);
+    setFormService(""); // User must select specific service
     setCustomerName("");
     setCustomerPhone("");
     setContactMethod("viber");
@@ -62,7 +58,7 @@ const Index = () => {
   };
 
   const handleSubmitRequest = async () => {
-    if (!customerName || !customerPhone) {
+    if (!formCategory || !formService || !customerName || !customerPhone) {
       toast({ title: "Грешка", description: "Ве молиме пополнете ги сите полиња", variant: "destructive" });
       return;
     }
@@ -70,16 +66,16 @@ const Index = () => {
     setIsSubmitting(true);
     try {
       // Find sub-service label
-      const catConfig = SERVICE_OPTIONS.find(c => c.id === activeService);
-      const subConfig = catConfig?.subServices.find(s => s.id === activeSubService);
+      const catConfig = SERVICE_OPTIONS.find(c => c.id === formCategory);
+      const subConfig = catConfig?.subServices.find(s => s.id === formService);
       
       const contactLabel = contactMethod === "viber" ? "Viber" : contactMethod === "whatsapp" ? "WhatsApp" : "SMS";
-      const notes = `[${subConfig?.label || activeService}] (Pref: ${contactLabel})`;
+      const notes = `[${subConfig?.label || formCategory}] (Pref: ${contactLabel})`;
 
       const { error } = await supabase.from("appointment_requests").insert({
         customer_name: customerName,
         client_phone: customerPhone,
-        service_type: activeService,
+        service_type: formCategory,
         appointment_date: format(selectedDate, "yyyy-MM-dd"),
         start_time: requestTime,
         duration_minutes: 30, // Default
@@ -109,23 +105,12 @@ const Index = () => {
             </h2>
             <div className="flex justify-center">
               <ServiceTabs 
-                activeService={activeService} 
-                onServiceChange={setActiveService} 
+                activeService={activeCategory} 
+                onServiceChange={setActiveCategory} 
               />
             </div>
           </div>
-
-          {/* Sub Service Selection */}
-          <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-             <h3 className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
-              Избери услуга
-            </h3>
-            <SubServiceSelect 
-              activeService={activeService}
-              activeSubService={activeSubService}
-              onSubServiceChange={setActiveSubService}
-            />
-          </div>
+          {/* SubServiceSelect REMOVED as requested */}
         </section>
 
         {/* Date Selection */}
@@ -145,7 +130,7 @@ const Index = () => {
         <section>
           <TimeSlots 
             selectedDate={selectedDate} 
-            activeService={activeService} 
+            activeService={activeCategory} 
             onSlotSelect={handleSlotSelect}
           />
         </section>
@@ -155,14 +140,12 @@ const Index = () => {
 
       {/* Request Dialog */}
       <Dialog open={isRequestOpen} onOpenChange={setIsRequestOpen}>
-        <DialogContent className="w-[95vw] max-w-md rounded-xl">
+        <DialogContent className="w-[95vw] max-w-md rounded-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{isSuccess ? "Барањето е испратено!" : "Закажи Термин"}</DialogTitle>
             {!isSuccess && (
               <DialogDescription>
                 {format(selectedDate, "dd.MM.yyyy")} во {requestTime}
-                <br/>
-                {SERVICE_OPTIONS.find(s => s.id === activeService)?.subServices.find(sub => sub.id === activeSubService)?.label}
               </DialogDescription>
             )}
           </DialogHeader>
@@ -181,6 +164,36 @@ const Index = () => {
             </div>
           ) : (
             <div className="space-y-4 py-2">
+              <div className="space-y-4 border-b pb-4">
+                <div className="space-y-2">
+                  <Label>Категорија</Label>
+                  <Select value={formCategory} onValueChange={(v) => { setFormCategory(v); setFormService(""); }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Изберете категорија..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SERVICE_OPTIONS.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>{cat.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Услуга</Label>
+                  <Select value={formService} onValueChange={setFormService} disabled={!formCategory}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Изберете услуга..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SERVICE_OPTIONS.find(c => c.id === formCategory)?.subServices.map((sub) => (
+                        <SelectItem key={sub.id} value={sub.id}>{sub.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Име</Label>
