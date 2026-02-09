@@ -1,316 +1,240 @@
-import { useState, useMemo } from "react";
-import { format, addDays, isBefore, startOfToday } from "date-fns";
+import { useState, useMemo, useEffect } from "react";
+import { format } from "date-fns";
 import { mk } from "date-fns/locale";
-import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SERVICE_OPTIONS } from "@/constants/services";
-import { useAppointments, getOccupiedSlots } from "@/hooks/useAppointments";
-import { Scissors, Sparkles, CheckCircle2, ChevronLeft, ChevronRight, Clock, User, Phone } from "lucide-react";
+import { useAppointments, Appointment } from "@/hooks/useAppointments";
+import { CheckCircle2, Phone, MessageCircle, Smartphone } from "lucide-react";
 import viollaLogo from "@/assets/new-logo.jpg";
+import WeekCalendar from "@/components/admin/WeekCalendar";
 
-type Step = "category" | "service" | "date" | "details" | "success";
-
-const BookingWizard = () => {
+const Index = () => {
   const { toast } = useToast();
-  const [step, setStep] = useState<Step>("category");
   
-  // Form State
-  const [category, setCategory] = useState<string>("");
-  const [service, setService] = useState<string>("");
-  const [date, setDate] = useState<Date | undefined>(undefined);
-  const [time, setTime] = useState<string>("");
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  // Public Filter State
+  const [activeCategory, setActiveCategory] = useState<"hair" | "nails" | "waxing">("hair");
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  // Fetch Appointments (Read-Only)
+  // We actually need ALL appointments to show occupied slots properly
+  // But we filter by date range inside WeekCalendar logic usually. 
+  // Let's reuse useAppointments which fetches public appointments.
+  const { appointments } = useAppointments(currentDate, "all"); 
+  
+  // Request Dialog State
+  const [isRequestOpen, setIsRequestOpen] = useState(false);
+  const [requestDate, setRequestDate] = useState<string>("");
+  const [requestTime, setRequestTime] = useState<string>("");
+  const [requestService, setRequestService] = useState<string>("");
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [contactMethod, setContactMethod] = useState<"viber" | "whatsapp" | "sms">("viber");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
-  // Fetch appointments for overlap check
-  const { appointments } = useAppointments(date, category);
+  // Handle slot click from Calendar
+  const handleSlotClick = (date: string, time: string) => {
+    setRequestDate(date);
+    setRequestTime(time);
+    // Reset form
+    setCustomerName("");
+    setCustomerPhone("");
+    setContactMethod("viber");
+    setRequestService("");
+    setIsSuccess(false);
+    setIsRequestOpen(true);
+  };
 
-  // Computed: Occupied Slots
-  const occupiedSlots = useMemo(() => {
-    if (!date || !category) return new Set<string>();
-    return getOccupiedSlots(appointments, date, category);
-  }, [appointments, date, category]);
-
-  // Generate Time Slots (09:00 - 20:00)
-  const timeSlots = useMemo(() => {
-    const slots = [];
-    for (let hour = 9; hour < 20; hour++) {
-      for (let min of [0, 15, 30, 45]) {
-        const timeStr = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
-        // Simple check: if slot is in occupied set, skip (or mark disabled)
-        if (!occupiedSlots.has(timeStr)) {
-          slots.push(timeStr);
-        }
-      }
+  const handleSubmitRequest = async () => {
+    if (!requestService || !customerName || !customerPhone) {
+      toast({ title: "Грешка", description: "Ве молиме пополнете ги сите полиња", variant: "destructive" });
+      return;
     }
-    return slots;
-  }, [occupiedSlots]);
-
-  const handleSubmit = async () => {
-    if (!category || !service || !date || !time || !name || !phone) return;
 
     setIsSubmitting(true);
     try {
-      // Find service label for nicer display
-      const catConfig = SERVICE_OPTIONS.find(c => c.id === category);
-      const subConfig = catConfig?.subServices.find(s => s.id === service);
-      const fullServiceLabel = subConfig ? `[${subConfig.label}]` : category;
+      // Find sub-service label
+      const catConfig = SERVICE_OPTIONS.find(c => c.id === activeCategory);
+      const subConfig = catConfig?.subServices.find(s => s.id === requestService);
+      
+      // Construct notes with preference
+      const contactLabel = contactMethod === "viber" ? "Viber" : contactMethod === "whatsapp" ? "WhatsApp" : "SMS";
+      const notes = `[${subConfig?.label || activeCategory}] (Pref: ${contactLabel})`;
 
       const { error } = await supabase.from("appointment_requests").insert({
-        customer_name: name,
-        client_phone: phone,
-        service_type: category, // Base category for overlap logic
-        appointment_date: format(date, "yyyy-MM-dd"),
-        start_time: time,
-        duration_minutes: 30, // Default duration, maybe customizable later
-        notes: fullServiceLabel, // Store sub-service in notes
+        customer_name: customerName,
+        client_phone: customerPhone,
+        service_type: activeCategory,
+        appointment_date: requestDate,
+        start_time: requestTime,
+        duration_minutes: 30, // Default assumption
+        notes: notes,
       });
 
       if (error) throw error;
-      setStep("success");
+      setIsSuccess(true);
     } catch (error) {
       console.error(error);
-      toast({
-        title: "Грешка",
-        description: "Настана проблем при испраќање на барањето. Обидете се повторно.",
-        variant: "destructive"
-      });
+      toast({ title: "Грешка", description: "Проблем при испраќање.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const getStepTitle = () => {
-    switch(step) {
-      case "category": return "Изберете Услуга";
-      case "service": return "Изберете Тип";
-      case "date": return "Изберете Термин";
-      case "details": return "Вашите Податоци";
-      case "success": return "Успешно!";
-      default: return "";
-    }
-  };
-
-  const handleBack = () => {
-    if (step === "service") setStep("category");
-    if (step === "date") setStep("service");
-    if (step === "details") setStep("date");
-  };
-
-  if (step === "success") {
-    return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 text-center">
-        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6 animate-in zoom-in">
-          <CheckCircle2 className="w-10 h-10 text-green-600" />
-        </div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">Барањето е примено!</h2>
-        <p className="text-slate-600 mb-8 max-w-xs">
-          Ви благодариме {name}. Ќе добиете потврда штом го одобриме вашиот термин.
-        </p>
-        <Button onClick={() => window.location.reload()} variant="outline">
-          Закажи нов термин
-        </Button>
-      </div>
-    );
-  }
+  // Convert appointments to read-only format for WeekCalendar
+  // We want to show them as "Occupied" blocks without details
+  const publicAppointments = useMemo(() => {
+    return appointments.map(apt => ({
+      ...apt,
+      customer_name: "Зафатено", // Mask name
+      client_phone: "",
+      notes: "",
+      // Keep ID and time for layout
+    })) as Appointment[];
+  }, [appointments]);
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-10">
+    <div className="min-h-screen bg-background pb-20">
       {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-4 h-16 flex items-center justify-between">
-          {step !== "category" ? (
-            <Button variant="ghost" size="icon" onClick={handleBack}>
-              <ChevronLeft className="w-5 h-5" />
-            </Button>
-          ) : <div className="w-9" />} {/* Spacer */}
-          
+      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border/50 shadow-sm">
+        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src={viollaLogo} className="w-8 h-8 rounded-full" alt="Logo" />
-            <span className="font-serif font-medium text-lg">Violla</span>
+            <img src={viollaLogo} className="w-9 h-9 rounded-full border border-border" alt="Logo" />
+            <span className="font-serif font-semibold text-lg tracking-wide">Violla</span>
           </div>
           
-          <div className="w-9" /> {/* Spacer */}
+          {/* Category Switcher */}
+          <div className="flex gap-1 bg-muted/50 p-1 rounded-lg">
+            {(["hair", "nails", "waxing"] as const).map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`
+                  px-3 py-1.5 text-xs font-medium rounded-md transition-all
+                  ${activeCategory === cat 
+                    ? "bg-background text-foreground shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"}
+                `}
+              >
+                {cat === "hair" ? "Коса" : cat === "nails" ? "Нокти" : "Деп."}
+              </button>
+            ))}
+          </div>
         </div>
       </header>
 
-      {/* Progress Bar */}
-      <div className="h-1 bg-slate-200">
-        <div 
-          className="h-full bg-slate-900 transition-all duration-300 ease-out"
-          style={{ 
-            width: step === "category" ? "25%" : 
-                   step === "service" ? "50%" : 
-                   step === "date" ? "75%" : "100%" 
-          }}
+      <main className="max-w-4xl mx-auto px-2 py-6">
+        <div className="mb-6 px-2">
+          <h1 className="text-2xl font-bold text-foreground mb-1">Закажете Термин</h1>
+          <p className="text-muted-foreground text-sm">
+            Изберете слободен термин од календарот за <strong>{activeCategory === "hair" ? "Коса" : activeCategory === "nails" ? "Нокти" : "Депилација"}</strong>.
+          </p>
+        </div>
+
+        {/* Calendar */}
+        <WeekCalendar 
+          appointments={publicAppointments.filter(a => a.service_type === activeCategory)} // Show only relevant category slots occupied? 
+          // Actually, if a hairdresser is busy, they are busy. 
+          // But we don't track resources yet (Employee A vs Employee B). 
+          // Assuming single resource per category for simplicity or simple overlap check.
+          // Let's show ALL appointments as occupied to prevent double booking ANYONE if we assume 1 seat per category.
+          // Or better: filter by category if they are distinct resources.
+          // Miki said: "горе првично си стои на коса ама ако сакам си бирам нокти". 
+          // Usually salons have different people for different services.
+          // So filtering by category is correct.
+          
+          onSlotClick={handleSlotClick}
+          onAppointmentClick={() => {}} // No action on clicking occupied slots
         />
-      </div>
+      </main>
 
-      <main className="max-w-md mx-auto p-4 pt-8">
-        <h1 className="text-2xl font-bold text-slate-900 mb-6 text-center">{getStepTitle()}</h1>
+      {/* Request Dialog */}
+      <Dialog open={isRequestOpen} onOpenChange={setIsRequestOpen}>
+        <DialogContent className="w-[95vw] max-w-md rounded-xl">
+          <DialogHeader>
+            <DialogTitle>{isSuccess ? "Барањето е испратено!" : "Детали за терминот"}</DialogTitle>
+            {!isSuccess && (
+              <DialogDescription>
+                {requestDate && format(new Date(requestDate), "dd.MM.yyyy")} во {requestTime}
+              </DialogDescription>
+            )}
+          </DialogHeader>
 
-        {/* Step 1: Category */}
-        {step === "category" && (
-          <div className="grid gap-4">
-            {SERVICE_OPTIONS.map((opt) => (
-              <Card 
-                key={opt.id} 
-                className="cursor-pointer hover:border-slate-400 transition-all hover:shadow-sm"
-                onClick={() => { setCategory(opt.id); setStep("service"); }}
-              >
-                <CardContent className="p-6 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center">
-                    {opt.id === "hair" ? <Scissors className="w-6 h-6 text-purple-600" /> : 
-                     opt.id === "nails" ? <Sparkles className="w-6 h-6 text-pink-600" /> :
-                     <Sparkles className="w-6 h-6 text-amber-600" />}
-                  </div>
-                  <div className="text-lg font-medium">{opt.label}</div>
-                  <ChevronRight className="ml-auto w-5 h-5 text-slate-400" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        {/* Step 2: Service */}
-        {step === "service" && (
-          <div className="grid gap-3">
-            {SERVICE_OPTIONS.find(c => c.id === category)?.subServices.map((sub) => (
-              <Button
-                key={sub.id}
-                variant="outline"
-                className="h-14 justify-start text-lg px-4"
-                onClick={() => { setService(sub.id); setStep("date"); }}
-              >
-                {sub.label}
+          {isSuccess ? (
+            <div className="py-6 flex flex-col items-center text-center space-y-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                <CheckCircle2 className="w-8 h-8 text-green-600" />
+              </div>
+              <p className="text-muted-foreground text-sm">
+                Вашето барање е примено. Ќе добиете потврда наскоро.
+              </p>
+              <Button className="w-full mt-4" onClick={() => setIsRequestOpen(false)}>
+                Во ред
               </Button>
-            ))}
-          </div>
-        )}
-
-        {/* Step 3: Date & Time */}
-        {step === "date" && (
-          <div className="space-y-6">
-            <div className="bg-white p-4 rounded-xl border shadow-sm">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={(d) => { setDate(d); setTime(""); }} // Reset time on date change
-                disabled={(d) => isBefore(d, startOfToday())}
-                locale={mk}
-                className="rounded-md border-0"
-                classNames={{
-                  head_cell: "text-slate-500 font-normal text-[0.8rem]",
-                  cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-slate-100 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-                  day_selected: "bg-slate-900 text-white hover:bg-slate-800 hover:text-white focus:bg-slate-900 focus:text-white",
-                  day_today: "bg-slate-100 text-slate-900",
-                }}
-              />
             </div>
+          ) : (
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label>Услуга</Label>
+                <Select value={requestService} onValueChange={setRequestService}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Изберете услуга..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SERVICE_OPTIONS.find(c => c.id === activeCategory)?.subServices.map((sub) => (
+                      <SelectItem key={sub.id} value={sub.id}>{sub.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {date && (
-              <div className="animate-in fade-in slide-in-from-bottom-4">
-                <h3 className="font-medium mb-3 flex items-center gap-2">
-                  <Clock className="w-4 h-4" /> Слободни термини
-                </h3>
-                <div className="grid grid-cols-4 gap-2">
-                  {timeSlots.length > 0 ? timeSlots.map((t) => (
-                    <Button
-                      key={t}
-                      variant={time === t ? "default" : "outline"}
-                      className={`text-sm ${time === t ? "bg-slate-900" : ""}`}
-                      onClick={() => setTime(t)}
-                    >
-                      {t}
-                    </Button>
-                  )) : (
-                    <div className="col-span-4 text-center text-muted-foreground py-4 text-sm">
-                      Нема слободни термини за овој ден.
-                    </div>
-                  )}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Име</Label>
+                  <Input placeholder="Вашето име" value={customerName} onChange={e => setCustomerName(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Телефон</Label>
+                  <Input placeholder="070..." value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} />
                 </div>
               </div>
-            )}
 
-            <Button 
-              className="w-full h-12 text-lg mt-4" 
-              disabled={!date || !time}
-              onClick={() => setStep("details")}
-            >
-              Продолжи
-            </Button>
-          </div>
-        )}
-
-        {/* Step 4: Details */}
-        {step === "details" && (
-          <div className="space-y-6">
-            <Card>
-              <CardContent className="p-6 space-y-4">
-                <div className="bg-slate-50 p-4 rounded-lg mb-4 text-sm space-y-1 border">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Услуга:</span>
-                    <span className="font-medium">
-                      {SERVICE_OPTIONS.find(c => c.id === category)?.subServices.find(s => s.id === service)?.label}
-                    </span>
+              <div className="space-y-3 pt-2">
+                <Label>Претпочитан контакт за потврда</Label>
+                <RadioGroup value={contactMethod} onValueChange={(v: any) => setContactMethod(v)} className="flex gap-4">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="viber" id="r1" />
+                    <Label htmlFor="r1" className="cursor-pointer flex items-center gap-1"><Phone className="w-3 h-3" /> Viber</Label>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Датум:</span>
-                    <span className="font-medium">
-                      {date && format(date, "dd.MM.yyyy")} во {time}
-                    </span>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="whatsapp" id="r2" />
+                    <Label htmlFor="r2" className="cursor-pointer flex items-center gap-1"><MessageCircle className="w-3 h-3" /> WhatsApp</Label>
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="name">Ваше Име</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-                    <Input 
-                      id="name" 
-                      placeholder="Внесете име..." 
-                      className="pl-9 h-11"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                    />
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="sms" id="r3" />
+                    <Label htmlFor="r3" className="cursor-pointer flex items-center gap-1"><Smartphone className="w-3 h-3" /> SMS</Label>
                   </div>
-                </div>
+                </RadioGroup>
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Телефон</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-                    <Input 
-                      id="phone" 
-                      placeholder="070..." 
-                      className="pl-9 h-11"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Button 
-              className="w-full h-12 text-lg bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20" 
-              disabled={!name || !phone || isSubmitting}
-              onClick={handleSubmit}
-            >
-              {isSubmitting ? "Се испраќа..." : "Потврди Барање"}
-            </Button>
-          </div>
-        )}
-      </main>
+              <DialogFooter className="pt-4">
+                <Button className="w-full" onClick={handleSubmitRequest} disabled={isSubmitting}>
+                  {isSubmitting ? "Се испраќа..." : "Испрати Барање"}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
-export default BookingWizard;
+export default Index;
