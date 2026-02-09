@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import Header from "@/components/Header";
@@ -16,12 +16,16 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, Phone, MessageCircle, Smartphone } from "lucide-react";
+import { useAppointments, getOccupiedSlots } from "@/hooks/useAppointments";
 
 const Index = () => {
   const [activeCategory, setActiveCategory] = useState("hair");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Fetch appointments to check occupancy inside dialog
+  const { appointments } = useAppointments(selectedDate, "all");
 
   // Request Dialog State
   const [isRequestOpen, setIsRequestOpen] = useState(false);
@@ -37,6 +41,26 @@ const Index = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
+  // Computed occupied slots for dialog select
+  const occupiedSlots = useMemo(() => {
+    if (!selectedDate || !formCategory) return new Set<string>();
+    return getOccupiedSlots(appointments, selectedDate, formCategory);
+  }, [appointments, selectedDate, formCategory]);
+
+  // Generate free time slots for dialog
+  const availableDialogSlots = useMemo(() => {
+    const slots = [];
+    for (let hour = 8; hour < 20; hour++) {
+      for (let min of [0, 15, 30, 45]) {
+        const timeStr = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
+        if (!occupiedSlots.has(timeStr)) {
+          slots.push(timeStr);
+        }
+      }
+    }
+    return slots;
+  }, [occupiedSlots]);
+
   // Check for password recovery hash on landing page
   useEffect(() => {
     const hash = window.location.hash;
@@ -47,9 +71,16 @@ const Index = () => {
 
   const handleSlotSelect = (time: string) => {
     setRequestTime(time);
-    // Pre-fill with current active category
     setFormCategory(activeCategory);
-    setFormService(""); // User must select specific service
+    
+    // Auto-select first service
+    const catConfig = SERVICE_OPTIONS.find(c => c.id === activeCategory);
+    if (catConfig && catConfig.subServices.length > 0) {
+      setFormService(catConfig.subServices[0].id);
+    } else {
+      setFormService("");
+    }
+
     setCustomerName("");
     setCustomerPhone("");
     setContactMethod("viber");
@@ -57,17 +88,30 @@ const Index = () => {
     setIsRequestOpen(true);
   };
 
+  const handleCategoryChange = (newCat: string) => {
+    setFormCategory(newCat);
+    const catConfig = SERVICE_OPTIONS.find(c => c.id === newCat);
+    if (catConfig && catConfig.subServices.length > 0) {
+      setFormService(catConfig.subServices[0].id);
+    } else {
+      setFormService("");
+    }
+  };
+
   const handleSubmitRequest = async () => {
-    if (!formCategory || !formService || !customerName || !customerPhone) {
+    if (!formCategory || !formService || !customerName || !customerPhone || !requestTime) {
       toast({ title: "Грешка", description: "Ве молиме пополнете ги сите полиња", variant: "destructive" });
       return;
     }
 
     setIsSubmitting(true);
     try {
-      // Find sub-service label
-      const catConfig = SERVICE_OPTIONS.find(c => c.id === formCategory);
-      const subConfig = catConfig?.subServices.find(s => s.id === formService);
+      // Last second check
+      // For public MVP, we skip complex server-side lock check, but rely on client state
+      // If needed, checkOverlap RPC could be called here if exposed
+      // const isTaken = await checkOverlap(...) 
+      
+      const subConfig = SERVICE_OPTIONS.find(c => c.id === formCategory)?.subServices.find(s => s.id === formService);
       
       const contactLabel = contactMethod === "viber" ? "Viber" : contactMethod === "whatsapp" ? "WhatsApp" : "SMS";
       const notes = `[${subConfig?.label || formCategory}] (Pref: ${contactLabel})`;
@@ -78,7 +122,7 @@ const Index = () => {
         service_type: formCategory,
         appointment_date: format(selectedDate, "yyyy-MM-dd"),
         start_time: requestTime,
-        duration_minutes: 30, // Default
+        duration_minutes: 30, 
         notes: notes,
       });
 
@@ -97,7 +141,6 @@ const Index = () => {
       <Header />
       
       <main className="max-w-md mx-auto px-4 py-6 space-y-6">
-        {/* Service Selection */}
         <section className="text-center space-y-4">
           <div>
             <h2 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
@@ -110,10 +153,8 @@ const Index = () => {
               />
             </div>
           </div>
-          {/* SubServiceSelect REMOVED as requested */}
         </section>
 
-        {/* Date Selection */}
         <section className="text-center">
           <h2 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
             Избери датум
@@ -126,7 +167,6 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Time Slots */}
         <section>
           <TimeSlots 
             selectedDate={selectedDate} 
@@ -138,14 +178,13 @@ const Index = () => {
 
       <ContactBar />
 
-      {/* Request Dialog */}
       <Dialog open={isRequestOpen} onOpenChange={setIsRequestOpen}>
         <DialogContent className="w-[95vw] max-w-md rounded-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{isSuccess ? "Барањето е испратено!" : "Закажи Термин"}</DialogTitle>
             {!isSuccess && (
               <DialogDescription>
-                {format(selectedDate, "dd.MM.yyyy")} во {requestTime}
+                {format(selectedDate, "dd.MM.yyyy")}
               </DialogDescription>
             )}
           </DialogHeader>
@@ -167,10 +206,8 @@ const Index = () => {
               <div className="space-y-4 border-b pb-4">
                 <div className="space-y-2">
                   <Label>Категорија</Label>
-                  <Select value={formCategory} onValueChange={(v) => { setFormCategory(v); setFormService(""); }}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Изберете категорија..." />
-                    </SelectTrigger>
+                  <Select value={formCategory} onValueChange={handleCategoryChange}>
+                    <SelectTrigger><SelectValue placeholder="Изберете категорија..." /></SelectTrigger>
                     <SelectContent>
                       {SERVICE_OPTIONS.map((cat) => (
                         <SelectItem key={cat.id} value={cat.id}>{cat.label}</SelectItem>
@@ -182,12 +219,22 @@ const Index = () => {
                 <div className="space-y-2">
                   <Label>Услуга</Label>
                   <Select value={formService} onValueChange={setFormService} disabled={!formCategory}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Изберете услуга..." />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Изберете услуга..." /></SelectTrigger>
                     <SelectContent>
                       {SERVICE_OPTIONS.find(c => c.id === formCategory)?.subServices.map((sub) => (
                         <SelectItem key={sub.id} value={sub.id}>{sub.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Време</Label>
+                  <Select value={requestTime} onValueChange={setRequestTime}>
+                    <SelectTrigger><SelectValue placeholder="Изберете време..." /></SelectTrigger>
+                    <SelectContent className="max-h-[200px]">
+                      {availableDialogSlots.map((t) => (
+                        <SelectItem key={t} value={t}>{t}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -206,7 +253,7 @@ const Index = () => {
               </div>
 
               <div className="space-y-3 pt-2">
-                <Label>Претпочитан контакт за потврда</Label>
+                <Label>Потврда преку</Label>
                 <RadioGroup value={contactMethod} onValueChange={(v: any) => setContactMethod(v)} className="flex gap-4">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="viber" id="r1" />
