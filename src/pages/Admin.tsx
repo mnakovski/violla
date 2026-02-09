@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { Plus, LogOut, Home, Calendar, AlertTriangle } from "lucide-react";
+import { Plus, LogOut, Home, Calendar, AlertTriangle, MessageCircle, Phone, Smartphone } from "lucide-react";
 import viollaLogo from "@/assets/new-logo.jpg";
 import { SERVICE_OPTIONS } from "@/constants/services";
 import WeekCalendar from "@/components/admin/WeekCalendar";
@@ -68,6 +68,15 @@ const generateTimeOptions = () => {
 };
 
 const timeOptions = generateTimeOptions();
+
+const generateConfirmationMessage = (data: any) => {
+  const serviceLabel = serviceLabels[data.service_type] || data.service_type;
+  // Format date to local standard (e.g. 10.02.2026)
+  const dateObj = new Date(data.appointment_date);
+  const formattedDate = format(dateObj, "dd.MM.yyyy");
+  
+  return `Здраво ${data.customer_name || ""}! Вашиот термин во Violla за ${serviceLabel} е потврден за ${formattedDate} во ${data.start_time.slice(0, 5)}. Ве очекуваме! ✨`;
+};
 
 const Admin = () => {
   const { user, isAdmin, loading: authLoading, signOut } = useAuth();
@@ -256,6 +265,42 @@ const Admin = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
+  };
+
+  // Notification Helpers
+  const sendSMS = () => {
+    if (!formData.client_phone) return;
+    const message = generateConfirmationMessage(formData);
+    const url = `sms:${formData.client_phone}?body=${encodeURIComponent(message)}`;
+    // For iOS compatibility, try simpler format if above fails, but standard is ?body
+    // Alternatively, just open sms:number and let user paste if body fails, but let's try universal first.
+    window.location.href = url;
+  };
+
+  const sendViber = () => {
+    if (!formData.client_phone) return;
+    const message = generateConfirmationMessage(formData);
+    // Remove leading 0 and add 389 if needed, but assuming local format 070...
+    let phone = formData.client_phone.replace(/\s/g, "");
+    if (phone.startsWith("0")) phone = "389" + phone.substring(1);
+    
+    // viber://chat?number=... is reliable for opening chat
+    const url = `viber://chat?number=%2B${phone}`; 
+    // Note: Viber deep links for pre-filling text are tricky/deprecated. 
+    // Best effort: Open chat, user pastes text (we can copy to clipboard first maybe? No, let's keep it simple).
+    // Actually, viber://forward?text=... allows picking contact. That might be better for pre-filling.
+    const forwardUrl = `viber://forward?text=${encodeURIComponent(message)}`;
+    window.location.href = forwardUrl;
+  };
+
+  const sendWhatsApp = () => {
+    if (!formData.client_phone) return;
+    const message = generateConfirmationMessage(formData);
+    let phone = formData.client_phone.replace(/\s/g, "");
+    if (phone.startsWith("0")) phone = "389" + phone.substring(1);
+    
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
   };
 
   if (authLoading || loading) {
@@ -482,12 +527,48 @@ const Admin = () => {
               />
             </div>
             
+            {/* Confirmation Actions */}
+            {formData.client_phone && (
+              <div className="space-y-2 pt-2 border-t border-border mt-2">
+                <Label className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Испрати Потврда</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="h-9 gap-1 text-xs border-purple-200 hover:bg-purple-50 hover:text-purple-600 dark:border-purple-900 dark:hover:bg-purple-900/20"
+                    onClick={sendViber}
+                    title="Viber"
+                  >
+                    <Phone className="w-3.5 h-3.5" /> Viber
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="h-9 gap-1 text-xs border-green-200 hover:bg-green-50 hover:text-green-600 dark:border-green-900 dark:hover:bg-green-900/20"
+                    onClick={sendWhatsApp}
+                    title="WhatsApp"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" /> WA
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="h-9 gap-1 text-xs border-blue-200 hover:bg-blue-50 hover:text-blue-600 dark:border-blue-900 dark:hover:bg-blue-900/20"
+                    onClick={sendSMS}
+                    title="SMS"
+                  >
+                    <Smartphone className="w-3.5 h-3.5" /> SMS
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {editingAppointment && (
-              <div className="pt-2">
+              <div className="pt-2 border-t border-border mt-2">
                 <Button 
                   type="button" 
                   variant="destructive" 
-                  className="w-full" 
+                  className="w-full h-9" 
                   onClick={() => confirmDelete(editingAppointment.id)}
                 >
                   Избриши термин
