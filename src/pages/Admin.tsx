@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAppointments, Appointment } from "@/hooks/useAppointments";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,7 @@ import { Plus, LogOut, Home, Calendar, AlertTriangle, MessageCircle, Phone, Smar
 import viollaLogo from "@/assets/new-logo.jpg";
 import { SERVICE_OPTIONS } from "@/constants/services";
 import WeekCalendar from "@/components/admin/WeekCalendar";
+import { supabase } from "@/integrations/supabase/client";
 
 const serviceLabels: Record<string, string> = {
   hair: "Коса",
@@ -80,6 +81,7 @@ const generateConfirmationMessage = (data: any) => {
 const Admin = () => {
   const { user, isAdmin, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   const {
     appointments,
@@ -100,6 +102,8 @@ const Admin = () => {
   
   // Store form data to be submitted after confirmation
   const [pendingSubmission, setPendingSubmission] = useState<any>(null);
+  // Store request ID if we came from a deep link
+  const [pendingRequestId, setPendingRequestId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     customer_name: "",
@@ -119,9 +123,68 @@ const Admin = () => {
     }
   }, [user, isAdmin, authLoading, navigate]);
 
+  // Deep Link Logic: Check for request_id in URL
+  useEffect(() => {
+    const requestId = searchParams.get("request_id");
+    if (requestId && isAdmin && !loading) {
+      const fetchRequest = async () => {
+        try {
+          const { data, error } = await supabase
+            .from("appointment_requests")
+            .select("*")
+            .eq("id", requestId)
+            .single();
+
+          if (error) throw error;
+          if (data) {
+            setPendingRequestId(requestId);
+            
+            // Try to parse sub-service from notes (e.g. "[Фенирање]")
+            let foundSubService = "";
+            if (data.notes && data.notes.startsWith("[")) {
+              const endIndex = data.notes.indexOf("]");
+              if (endIndex > 1) {
+                const label = data.notes.substring(1, endIndex);
+                const serviceConfig = SERVICE_OPTIONS.find(s => s.id === data.service_type);
+                const sub = serviceConfig?.subServices.find(s => s.label === label);
+                if (sub) foundSubService = sub.id;
+              }
+            }
+
+            setFormData({
+              customer_name: data.customer_name,
+              client_phone: data.client_phone,
+              service_type: data.service_type as "hair" | "nails" | "waxing",
+              sub_service: foundSubService,
+              appointment_date: data.appointment_date,
+              start_time: data.start_time.slice(0, 5),
+              duration_minutes: data.duration_minutes,
+              notes: data.notes || "",
+            });
+            setIsDialogOpen(true);
+            
+            // Clean URL
+            searchParams.delete("request_id");
+            setSearchParams(searchParams);
+          }
+        } catch (error) {
+          console.error("Error fetching request:", error);
+          toast({
+            title: "Грешка",
+            description: "Не можевме да го вчитаме барањето.",
+            variant: "destructive"
+          });
+        }
+      };
+      
+      fetchRequest();
+    }
+  }, [searchParams, isAdmin, loading]);
+
   const handleSlotClick = (date: string, time: string) => {
     setEditingAppointment(null);
     setShowSuccessView(false);
+    setPendingRequestId(null);
     setFormData({
       customer_name: "",
       client_phone: "",
@@ -137,6 +200,7 @@ const Admin = () => {
 
   const handleOpenDialog = (appointment?: Appointment) => {
     setShowSuccessView(false);
+    setPendingRequestId(null);
     if (appointment) {
       setEditingAppointment(appointment);
       
@@ -183,14 +247,22 @@ const Admin = () => {
           title: "Успешно",
           description: "Терминот е ажуриран",
         });
-        setIsDialogOpen(false); // Close on edit as requested (but buttons are visible inside if they want to click before saving)
+        setIsDialogOpen(false); 
       } else {
         await createAppointment(data);
+        
+        // If this came from a request, update the request status
+        if (pendingRequestId) {
+          await supabase
+            .from("appointment_requests")
+            .update({ status: "approved" })
+            .eq("id", pendingRequestId);
+        }
+
         toast({
           title: "Успешно",
           description: "Терминот е додаден",
         });
-        // Show success view instead of closing
         setShowSuccessView(true);
       }
       setPendingSubmission(null);
