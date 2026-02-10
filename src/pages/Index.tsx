@@ -117,9 +117,9 @@ const Index = () => {
 
       if (error) throw error;
 
-      // 2. Client-Side Notification (POST JSON)
+      // 2. Client-Side Notification (POST JSON - Plain Text)
       const token = "8023276456:AAF6ojBjLCH1wJzMkaYV5E6FIZbIPlAtIYk";
-      const chatId = -5270245125; // INTEGER
+      const chatId = -5270245125; 
       const serviceIcon = formCategory === 'hair' ? '✂️' : formCategory === 'nails' ? '💅' : '✨';
       const serviceMk = formCategory === 'hair' ? 'Коса' : formCategory === 'nails' ? 'Нокти' : 'Депилација';
       const details = subConfig?.label || "";
@@ -141,7 +141,7 @@ const Index = () => {
           body: JSON.stringify({
             chat_id: chatId,
             text: message
-            // NO parse_mode (Plain Text)
+            // NO parse_mode
           })
         });
       } catch (e) {
