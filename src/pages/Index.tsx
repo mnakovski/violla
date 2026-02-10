@@ -173,7 +173,7 @@ const Index = () => {
       <ContactBar />
 
       <Dialog open={isRequestOpen} onOpenChange={setIsRequestOpen}>
-        <DialogContent className="w-[95vw] max-w-md rounded-xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-md rounded-xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{isSuccess ? "Барањето е испратено!" : "Закажи Термин"}</DialogTitle>
             {!isSuccess && (
