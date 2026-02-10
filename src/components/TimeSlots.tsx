@@ -8,7 +8,7 @@ interface TimeSlotsProps {
 }
 
 const TimeSlots = ({ selectedDate, activeService, onSlotSelect }: TimeSlotsProps) => {
-  const { isOpen } = getWorkingHours(selectedDate);
+  const { isOpen, startHour, startMinute, endHour, endMinute } = getWorkingHours(selectedDate);
   const { appointments, loading } = useAppointments(selectedDate, activeService);
   
   if (!isOpen) {
@@ -28,9 +28,17 @@ const TimeSlots = ({ selectedDate, activeService, onSlotSelect }: TimeSlotsProps
   const timeSlots = generateTimeSlotsForDate(selectedDate);
   const occupiedSlots = getOccupiedSlots(appointments, selectedDate, activeService);
 
+  // Format time range for display (e.g. 08:30 - 14:30)
+  const startTimeStr = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;
+  const endTimeStr = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
+
   return (
     <div className="salon-card p-4 pt-0">
-      {/* Legend and Title removed as requested */}
+      <div className="text-center mb-4 pt-2">
+         <span className="text-xs font-medium text-muted-foreground bg-secondary/50 px-2 py-1 rounded-full">
+            Работно време: {startTimeStr} - {endTimeStr}
+         </span>
+      </div>
       
       {loading ? (
         <div className="text-center py-8 text-muted-foreground">

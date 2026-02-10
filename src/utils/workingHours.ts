@@ -1,40 +1,50 @@
 import { getDay } from "date-fns";
 
 export interface WorkingHours {
-  start: number; // hour (0-23)
-  end: number;   // hour (0-23)
+  startHour: number;
+  startMinute: number;
+  endHour: number;
+  endMinute: number;
   isOpen: boolean;
 }
 
 export const getWorkingHours = (date: Date): WorkingHours => {
   const day = getDay(date); // 0 = Sunday, 1 = Monday, ...
 
-  // Sunday
+  // Sunday: Closed
   if (day === 0) {
-    return { start: 0, end: 0, isOpen: false };
+    return { startHour: 0, startMinute: 0, endHour: 0, endMinute: 0, isOpen: false };
   }
 
-  // Mon (1), Wed (3), Fri (5) -> 2nd Shift (14:00 - 20:00)
+  // Mon (1), Wed (3), Fri (5) -> 13:00 - 20:00
   if (day === 1 || day === 3 || day === 5) {
-    return { start: 14, end: 20, isOpen: true };
+    return { startHour: 13, startMinute: 0, endHour: 20, endMinute: 0, isOpen: true };
   }
 
-  // Tue (2), Thu (4), Sat (6) -> 1st Shift (09:00 - 16:00)
-  // Note: Standard shift usually allows last booking at 15:30/15:45 if it closes at 16:00
-  return { start: 9, end: 16, isOpen: true };
+  // Sat (6) -> 09:00 - 15:00
+  if (day === 6) {
+    return { startHour: 9, startMinute: 0, endHour: 15, endMinute: 0, isOpen: true };
+  }
+
+  // Tue (2), Thu (4) -> 08:30 - 14:30
+  return { startHour: 8, startMinute: 30, endHour: 14, endMinute: 30, isOpen: true };
 };
 
 export const generateTimeSlotsForDate = (date: Date): string[] => {
-  const { start, end, isOpen } = getWorkingHours(date);
+  const { startHour, startMinute, endHour, endMinute, isOpen } = getWorkingHours(date);
   
   if (!isOpen) return [];
 
   const slots = [];
-  for (let hour = start; hour < end; hour++) {
-    slots.push(`${hour.toString().padStart(2, "0")}:00`);
-    slots.push(`${hour.toString().padStart(2, "0")}:15`);
-    slots.push(`${hour.toString().padStart(2, "0")}:30`);
-    slots.push(`${hour.toString().padStart(2, "0")}:45`);
+  // Calculate total minutes for range
+  const startTotal = startHour * 60 + startMinute;
+  const endTotal = endHour * 60 + endMinute;
+
+  // Generate slots every 15 mins
+  for (let m = startTotal; m < endTotal; m += 15) {
+    const h = Math.floor(m / 60);
+    const min = m % 60;
+    slots.push(`${h.toString().padStart(2, "0")}:${min.toString().padStart(2, "0")}`);
   }
   return slots;
 };
