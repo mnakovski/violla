@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import Header from "@/components/Header";
@@ -16,12 +16,17 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, Phone, MessageCircle, Smartphone } from "lucide-react";
+import { useAppointments, getOccupiedSlots } from "@/hooks/useAppointments";
+import { generateTimeSlotsForDate } from "@/utils/workingHours";
 
 const Index = () => {
   const [activeCategory, setActiveCategory] = useState("hair");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Fetch appointments to check occupancy inside dialog
+  const { appointments } = useAppointments(selectedDate, "all");
 
   // Request Dialog State
   const [isRequestOpen, setIsRequestOpen] = useState(false);
@@ -36,6 +41,19 @@ const Index = () => {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  // Computed occupied slots for dialog select
+  const occupiedSlots = useMemo(() => {
+    if (!selectedDate || !formCategory) return new Set<string>();
+    return getOccupiedSlots(appointments, selectedDate, formCategory);
+  }, [appointments, selectedDate, formCategory]);
+
+  // Generate free time slots for dialog
+  const availableDialogSlots = useMemo(() => {
+    const slots = generateTimeSlotsForDate(selectedDate);
+    // Filter occupied
+    return slots.filter(time => !occupiedSlots.has(time));
+  }, [selectedDate, occupiedSlots]);
 
   // Check for password recovery hash on landing page
   useEffect(() => {
@@ -117,6 +135,7 @@ const Index = () => {
                       `[👉 ОТВОРИ АДМИН](https://violla.mk/admin?request_id=${data.id})`;
 
       try {
+        // Use encodeURIComponent for the text param to handle spaces and special chars correctly
         await fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${message}&parse_mode=Markdown`);
       } catch (e) {
         console.error("Telegram notification failed (Client-side):", e);
@@ -225,8 +244,14 @@ const Index = () => {
 
                 <div className="space-y-2">
                   <Label>Време</Label>
-                  {/* Simplification: Just text input or basic select for now since dynamic import was tricky */}
-                  <Input value={requestTime} onChange={(e) => setRequestTime(e.target.value)} disabled />
+                  <Select value={requestTime} onValueChange={setRequestTime}>
+                    <SelectTrigger><SelectValue placeholder="Изберете време..." /></SelectTrigger>
+                    <SelectContent className="max-h-[200px]">
+                      {availableDialogSlots.map((t) => (
+                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
