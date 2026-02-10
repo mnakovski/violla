@@ -124,19 +124,18 @@ const Index = () => {
       const serviceMk = formCategory === 'hair' ? 'Коса' : formCategory === 'nails' ? 'Нокти' : 'Депилација';
       const details = subConfig?.label || "";
       
-      const message = `🔔 *НОВО БАРАЊЕ!*%0A%0A` +
-                      `👤 *Клиент:* ${customerName}%0A` +
-                      `📞 *Тел:* \`${customerPhone}\`%0A` +
-                      `💬 *Контакт:* ${contactLabel}%0A` +
-                      `${serviceIcon} *Услуга:* ${serviceMk} ${details}%0A` +
-                      `📅 *Датум:* ${format(selectedDate, "dd.MM.yyyy")}%0A` +
-                      `⏰ *Време:* ${requestTime}%0A%0A` +
-                      `👇 *Кликни за потврда:*%0A` +
-                      `[👉 ОТВОРИ АДМИН](https://violla.mk/admin?request_id=${data.id})`;
+      const message = `🔔 НОВО БАРАЊЕ!\n\n` +
+                      `👤 Клиент: ${customerName}\n` +
+                      `📞 Тел: ${customerPhone}\n` +
+                      `💬 Контакт: ${contactLabel}\n` +
+                      `${serviceIcon} Услуга: ${serviceMk} ${details}\n` +
+                      `📅 Датум: ${format(selectedDate, "dd.MM.yyyy")}\n` +
+                      `⏰ Време: ${requestTime}\n\n` +
+                      `👇 Кликни за потврда:\n` +
+                      `https://violla.mk/admin?request_id=${data.id}`;
 
       try {
-        // Use encodeURIComponent for the text param to handle spaces and special chars correctly
-        await fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${message}&parse_mode=Markdown`);
+        await fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`);
       } catch (e) {
         console.error("Telegram notification failed (Client-side):", e);
       }
