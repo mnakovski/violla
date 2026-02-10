@@ -117,22 +117,22 @@ const Index = () => {
 
       if (error) throw error;
 
-      // 2. Client-Side Notification (POST JSON to bypass strict URL encoding issues)
+      // 2. Client-Side Notification (POST JSON)
       const token = "8023276456:AAF6ojBjLCH1wJzMkaYV5E6FIZbIPlAtIYk";
-      const chatId = "-5270245125";
+      const chatId = -5270245125; // INTEGER
       const serviceIcon = formCategory === 'hair' ? '✂️' : formCategory === 'nails' ? '💅' : '✨';
       const serviceMk = formCategory === 'hair' ? 'Коса' : formCategory === 'nails' ? 'Нокти' : 'Депилација';
       const details = subConfig?.label || "";
       
-      const message = `🔔 *НОВО БАРАЊЕ!*\n\n` +
-                      `👤 *Клиент:* ${customerName}\n` +
-                      `📞 *Тел:* \`${customerPhone}\`\n` +
-                      `💬 *Контакт:* ${contactLabel}\n` +
-                      `${serviceIcon} *Услуга:* ${serviceMk} ${details}\n` +
-                      `📅 *Датум:* ${format(selectedDate, "dd.MM.yyyy")}\n` +
-                      `⏰ *Време:* ${requestTime}\n\n` +
-                      `👇 *Кликни за потврда:*\n` +
-                      `[👉 ОТВОРИ АДМИН](https://violla.mk/admin?request_id=${data.id})`;
+      const message = `🔔 НОВО БАРАЊЕ!\n\n` +
+                      `👤 Клиент: ${customerName}\n` +
+                      `📞 Тел: ${customerPhone}\n` +
+                      `💬 Контакт: ${contactLabel}\n` +
+                      `${serviceIcon} Услуга: ${serviceMk} ${details}\n` +
+                      `📅 Датум: ${format(selectedDate, "dd.MM.yyyy")}\n` +
+                      `⏰ Време: ${requestTime}\n\n` +
+                      `👇 Кликни за потврда:\n` +
+                      `https://violla.mk/admin?request_id=${data.id}`;
 
       try {
         await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -140,8 +140,8 @@ const Index = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             chat_id: chatId,
-            text: message,
-            parse_mode: 'Markdown'
+            text: message
+            // NO parse_mode (Plain Text)
           })
         });
       } catch (e) {
