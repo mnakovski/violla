@@ -8,7 +8,7 @@ interface TimeSlotsProps {
 }
 
 const TimeSlots = ({ selectedDate, activeService, onSlotSelect }: TimeSlotsProps) => {
-  const { isOpen, start, end } = getWorkingHours(selectedDate);
+  const { isOpen } = getWorkingHours(selectedDate);
   const { appointments, loading } = useAppointments(selectedDate, activeService);
   
   if (!isOpen) {
@@ -29,23 +29,9 @@ const TimeSlots = ({ selectedDate, activeService, onSlotSelect }: TimeSlotsProps
   const occupiedSlots = getOccupiedSlots(appointments, selectedDate, activeService);
 
   return (
-    <div className="salon-card p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-foreground">
-          Достапни термини ({start}:00 - {end}:00)
-        </h3>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded-full bg-accent/80"></div>
-            <span>Слободно</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded-full bg-muted"></div>
-            <span>Зафатено</span>
-          </div>
-        </div>
-      </div>
-
+    <div className="salon-card p-4 pt-0">
+      {/* Legend and Title removed as requested */}
+      
       {loading ? (
         <div className="text-center py-8 text-muted-foreground">
           Се вчитува...
