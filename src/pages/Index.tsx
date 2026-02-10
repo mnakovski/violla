@@ -100,17 +100,12 @@ const Index = () => {
 
     setIsSubmitting(true);
     try {
-      // Last second check
-      // For public MVP, we skip complex server-side lock check, but rely on client state
-      // If needed, checkOverlap RPC could be called here if exposed
-      // const isTaken = await checkOverlap(...) 
-      
       const subConfig = SERVICE_OPTIONS.find(c => c.id === formCategory)?.subServices.find(s => s.id === formService);
-      
       const contactLabel = contactMethod === "viber" ? "Viber" : contactMethod === "whatsapp" ? "WhatsApp" : "SMS";
       const notes = `[${subConfig?.label || formCategory}] (Pref: ${contactLabel})`;
 
-      const { error } = await supabase.from("appointment_requests").insert({
+      // 1. Insert Request (Use select to get ID, rely on public SELECT policy)
+      const { data, error } = await supabase.from("appointment_requests").insert({
         customer_name: customerName,
         client_phone: customerPhone,
         service_type: formCategory,
@@ -118,9 +113,41 @@ const Index = () => {
         start_time: requestTime,
         duration_minutes: 30, 
         notes: notes,
-      });
+      }).select().single();
 
       if (error) throw error;
+
+      // 2. Client-Side Notification (POST JSON)
+      const token = "8023276456:AAF6ojBjLCH1wJzMkaYV5E6FIZbIPlAtIYk";
+      const chatId = -5270245125; // INTEGER
+      const serviceIcon = formCategory === 'hair' ? '✂️' : formCategory === 'nails' ? '💅' : '✨';
+      const serviceMk = formCategory === 'hair' ? 'Коса' : formCategory === 'nails' ? 'Нокти' : 'Депилација';
+      const details = subConfig?.label || "";
+      
+      const message = `🔔 НОВО БАРАЊЕ!\n\n` +
+                      `👤 Клиент: ${customerName}\n` +
+                      `📞 Тел: ${customerPhone}\n` +
+                      `💬 Контакт: ${contactLabel}\n` +
+                      `${serviceIcon} Услуга: ${serviceMk} ${details}\n` +
+                      `📅 Датум: ${format(selectedDate, "dd.MM.yyyy")}\n` +
+                      `⏰ Време: ${requestTime}\n\n` +
+                      `👇 Кликни за потврда:\n` +
+                      `https://violla.mk/admin?request_id=${data.id}`;
+
+      try {
+        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: message
+            // NO parse_mode (Plain Text)
+          })
+        });
+      } catch (e) {
+        console.error("Telegram notification failed (Client-side):", e);
+      }
+
       setIsSuccess(true);
     } catch (error) {
       console.error(error);
@@ -173,7 +200,7 @@ const Index = () => {
       <ContactBar />
 
       <Dialog open={isRequestOpen} onOpenChange={setIsRequestOpen}>
-        <DialogContent className="w-[95vw] max-w-md rounded-xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-md rounded-xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{isSuccess ? "Барањето е испратено!" : "Закажи Термин"}</DialogTitle>
             {!isSuccess && (
