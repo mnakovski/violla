@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, Phone, MessageCircle, Smartphone } from "lucide-react";
 import { useAppointments, getOccupiedSlots } from "@/hooks/useAppointments";
+import { generateTimeSlotsForDate } from "@/utils/workingHours";
 
 const Index = () => {
   const [activeCategory, setActiveCategory] = useState("hair");
@@ -49,17 +50,10 @@ const Index = () => {
 
   // Generate free time slots for dialog
   const availableDialogSlots = useMemo(() => {
-    const slots = [];
-    for (let hour = 8; hour < 20; hour++) {
-      for (let min of [0, 15, 30, 45]) {
-        const timeStr = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
-        if (!occupiedSlots.has(timeStr)) {
-          slots.push(timeStr);
-        }
-      }
-    }
-    return slots;
-  }, [occupiedSlots]);
+    const slots = generateTimeSlotsForDate(selectedDate);
+    // Filter occupied
+    return slots.filter(time => !occupiedSlots.has(time));
+  }, [selectedDate, occupiedSlots]);
 
   // Check for password recovery hash on landing page
   useEffect(() => {

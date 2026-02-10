@@ -1,5 +1,5 @@
-import { isSunday } from "date-fns";
 import { useAppointments, getOccupiedSlots } from "@/hooks/useAppointments";
+import { generateTimeSlotsForDate, getWorkingHours } from "@/utils/workingHours";
 
 interface TimeSlotsProps {
   selectedDate: Date;
@@ -7,23 +7,11 @@ interface TimeSlotsProps {
   onSlotSelect?: (time: string) => void;
 }
 
-// Generate time slots from 08:00 to 20:00 (15 min intervals)
-const generateTimeSlots = () => {
-  const slots = [];
-  for (let hour = 8; hour < 20; hour++) {
-    slots.push(`${hour.toString().padStart(2, "0")}:00`);
-    slots.push(`${hour.toString().padStart(2, "0")}:15`);
-    slots.push(`${hour.toString().padStart(2, "0")}:30`);
-    slots.push(`${hour.toString().padStart(2, "0")}:45`);
-  }
-  return slots;
-};
-
 const TimeSlots = ({ selectedDate, activeService, onSlotSelect }: TimeSlotsProps) => {
-  const isClosed = isSunday(selectedDate);
+  const { isOpen, start, end } = getWorkingHours(selectedDate);
   const { appointments, loading } = useAppointments(selectedDate, activeService);
   
-  if (isClosed) {
+  if (!isOpen) {
     return (
       <div className="salon-card p-8 text-center">
         <div className="text-4xl mb-3">🌙</div>
@@ -31,20 +19,20 @@ const TimeSlots = ({ selectedDate, activeService, onSlotSelect }: TimeSlotsProps
           Неработен ден
         </h3>
         <p className="text-sm text-muted-foreground">
-          Ве молиме изберете друг ден
+          Салонот не работи во Недела.
         </p>
       </div>
     );
   }
 
-  const timeSlots = generateTimeSlots();
+  const timeSlots = generateTimeSlotsForDate(selectedDate);
   const occupiedSlots = getOccupiedSlots(appointments, selectedDate, activeService);
 
   return (
     <div className="salon-card p-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-foreground">
-          Достапни термини
+          Достапни термини ({start}:00 - {end}:00)
         </h3>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
