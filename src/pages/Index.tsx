@@ -119,6 +119,7 @@ const Index = () => {
 
       // 2. Client-Side Notification (Bypass pg_net)
       const token = "8023276456:AAF6ojBjLCH1wJzMkaYV5E6FIZbIPlAtIYk";
+      // Use the group ID provided: -5270245125
       const chatId = "-5270245125";
       const serviceIcon = formCategory === 'hair' ? '✂️' : formCategory === 'nails' ? '💅' : '✨';
       const serviceMk = formCategory === 'hair' ? 'Коса' : formCategory === 'nails' ? 'Нокти' : 'Депилација';
