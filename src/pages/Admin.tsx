@@ -396,11 +396,10 @@ const Admin = () => {
     let phone = formData.client_phone.replace(/\s/g, "");
     if (phone.startsWith("0")) phone = "389" + phone.substring(1);
 
-    // Android has better support for smsto: URI scheme
-    const isAndroid = /Android/.test(navigator.userAgent);
-    const url = isAndroid
-      ? `smsto:${phone}?body=${encodeURIComponent(message)}`
-      : `sms:${phone}&body=${encodeURIComponent(message)}`;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const url = isIOS
+      ? `sms:${phone}&body=${encodeURIComponent(message)}`
+      : `sms:${phone}?body=${encodeURIComponent(message)}`;
 
     window.location.href = url;
   };
