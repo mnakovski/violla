@@ -1,4 +1,5 @@
-import { getDay } from "date-fns";
+import { getDay, format } from "date-fns";
+import { NonWorkingDay } from "@/hooks/useNonWorkingDays";
 
 export interface WorkingHours {
   startHour: number;
@@ -8,8 +9,14 @@ export interface WorkingHours {
   isOpen: boolean;
 }
 
-export const getWorkingHours = (date: Date): WorkingHours => {
+export const getWorkingHours = (date: Date, nonWorkingDays: NonWorkingDay[] = []): WorkingHours => {
   const day = getDay(date); // 0 = Sunday, 1 = Monday, ...
+  const dateStr = format(date, "yyyy-MM-dd");
+
+  // Custom non-working day
+  if (nonWorkingDays.some(nwd => nwd.date === dateStr)) {
+    return { startHour: 0, startMinute: 0, endHour: 0, endMinute: 0, isOpen: false };
+  }
 
   // Sunday: Closed
   if (day === 0) {
@@ -30,9 +37,9 @@ export const getWorkingHours = (date: Date): WorkingHours => {
   return { startHour: 8, startMinute: 30, endHour: 14, endMinute: 30, isOpen: true };
 };
 
-export const generateTimeSlotsForDate = (date: Date): string[] => {
-  const { startHour, startMinute, endHour, endMinute, isOpen } = getWorkingHours(date);
-  
+export const generateTimeSlotsForDate = (date: Date, nonWorkingDays: NonWorkingDay[] = []): string[] => {
+  const { startHour, startMinute, endHour, endMinute, isOpen } = getWorkingHours(date, nonWorkingDays);
+
   if (!isOpen) return [];
 
   const slots = [];

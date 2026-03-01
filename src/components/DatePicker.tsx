@@ -9,6 +9,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useNonWorkingDays, isNonWorkingDay } from "@/hooks/useNonWorkingDays";
 
 interface DatePickerProps {
   selectedDate: Date;
@@ -42,7 +43,12 @@ const macedonianMonths: { [key: string]: string } = {
 
 const DatePicker = ({ selectedDate, onDateChange }: DatePickerProps) => {
   const [open, setOpen] = useState(false);
-  const isClosed = isSunday(selectedDate);
+  const { nonWorkingDays } = useNonWorkingDays();
+
+  const isSundayOnly = isSunday(selectedDate);
+  const isCustomClosed = isNonWorkingDay(selectedDate, nonWorkingDays);
+  const isClosed = isSundayOnly || isCustomClosed;
+
   const today = new Date();
 
   const dayName = format(selectedDate, "EEEE");
@@ -60,20 +66,12 @@ const DatePicker = ({ selectedDate, onDateChange }: DatePickerProps) => {
   const goToPreviousDay = (e: React.MouseEvent) => {
     e.stopPropagation();
     let prevDay = subDays(selectedDate, 1);
-    // Skip Sunday when navigating backwards
-    if (isSunday(prevDay)) {
-      prevDay = subDays(prevDay, 1);
-    }
     onDateChange(prevDay);
   };
 
   const goToNextDay = (e: React.MouseEvent) => {
     e.stopPropagation();
     let nextDay = addDays(selectedDate, 1);
-    // Skip Sunday when navigating forwards
-    if (isSunday(nextDay)) {
-      nextDay = addDays(nextDay, 1);
-    }
     onDateChange(nextDay);
   };
 
@@ -100,7 +98,7 @@ const DatePicker = ({ selectedDate, onDateChange }: DatePickerProps) => {
                   {dayNumber} {macedonianMonths[monthName] || monthName} {year}
                 </p>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 {isToday(selectedDate) && (
                   <span className="px-3 py-1 text-sm rounded-full bg-accent text-accent-foreground font-medium">
@@ -135,19 +133,18 @@ const DatePicker = ({ selectedDate, onDateChange }: DatePickerProps) => {
             className={cn("p-3 pointer-events-auto")}
             modifiers={{
               currentWeek: (date) => isSameWeek(date, today, { weekStartsOn: 1 }),
-              sunday: (date) => isSunday(date),
+              closed: (date) => isSunday(date) || isNonWorkingDay(date, nonWorkingDays),
             }}
             modifiersStyles={{
               currentWeek: {
                 backgroundColor: "hsl(var(--accent) / 0.15)",
                 borderRadius: "0",
               },
-              sunday: {
+              closed: {
                 opacity: 0.4,
                 textDecoration: "line-through",
               },
             }}
-            disabled={(date) => isSunday(date)}
           />
         </PopoverContent>
       </Popover>

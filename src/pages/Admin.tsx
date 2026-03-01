@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAppointments, Appointment } from "@/hooks/useAppointments";
+import { useNonWorkingDays } from "@/hooks/useNonWorkingDays";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,7 +32,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
+import { mk } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import {
   Plus,
   LogOut,
@@ -102,9 +107,17 @@ const Admin = () => {
   } = useAdminAppointments();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isNonWorkingDaysDialogOpen, setIsNonWorkingDaysDialogOpen] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isOverlapAlertOpen, setIsOverlapAlertOpen] = useState(false);
   const [showSuccessView, setShowSuccessView] = useState(false);
+
+  // Non-Working Days hook
+  const { nonWorkingDays, addNonWorkingDay, removeNonWorkingDay } = useNonWorkingDays();
+  const [nwdFormData, setNwdFormData] = useState({
+    date: format(new Date(), "yyyy-MM-dd"),
+    reason: "",
+  });
 
   const [appointmentToDelete, setAppointmentToDelete] = useState<string | null>(
     null,
@@ -455,6 +468,33 @@ const Admin = () => {
     </div>
   );
 
+  const handleAddNonWorkingDay = async () => {
+    try {
+      await addNonWorkingDay(new Date(nwdFormData.date), nwdFormData.reason);
+      toast({ title: "Успешно", description: "Неработниот ден е додаден" });
+      setNwdFormData({ date: format(new Date(), "yyyy-MM-dd"), reason: "" });
+    } catch (error) {
+      toast({
+        title: "Грешка",
+        description: "Датумот веќе постои или се случи грешка.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRemoveNonWorkingDay = async (id: string) => {
+    try {
+      await removeNonWorkingDay(id);
+      toast({ title: "Успешно", description: "Неработниот ден е отстранет" });
+    } catch (error) {
+      toast({
+        title: "Грешка",
+        description: "Се случи грешка при отстранување.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -509,14 +549,25 @@ const Admin = () => {
       <main className="max-w-6xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
         <div className="flex justify-between items-center mb-4 sm:mb-6">
           <h2 className="text-xl font-semibold text-foreground">Термини</h2>
-          <Button
-            onClick={() => handleOpenDialog()}
-            className="bg-accent hover:bg-accent/90 shadow-md"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Додај термин</span>
-            <span className="sm:hidden">Додај</span>
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setIsNonWorkingDaysDialogOpen(true)}
+              variant="outline"
+              className="shadow-sm"
+            >
+              <Calendar className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Неработни денови</span>
+              <span className="sm:hidden">Слободни</span>
+            </Button>
+            <Button
+              onClick={() => handleOpenDialog()}
+              className="bg-accent hover:bg-accent/90 shadow-md"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Додај термин</span>
+              <span className="sm:hidden">Додај</span>
+            </Button>
+          </div>
         </div>
         <WeekCalendar
           appointments={appointments}
@@ -652,17 +703,29 @@ const Admin = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Датум</Label>
-                    <Input
-                      type="date"
-                      value={formData.appointment_date}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          appointment_date: e.target.value,
-                        })
-                      }
-                      className="h-10"
-                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full h-10 justify-start text-left font-normal border-input bg-background hover:bg-accent hover:text-accent-foreground",
+                            !formData.appointment_date && "text-muted-foreground"
+                          )}
+                        >
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {formData.appointment_date ? format(new Date(formData.appointment_date), "dd.MM.yyyy") : <span>Избери датум</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          mode="single"
+                          selected={formData.appointment_date ? new Date(formData.appointment_date) : undefined}
+                          onSelect={(date) => date && setFormData({ ...formData, appointment_date: format(date, "yyyy-MM-dd") })}
+                          locale={mk}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <div className="space-y-2">
                     <Label>Време</Label>
@@ -783,6 +846,97 @@ const Admin = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={isNonWorkingDaysDialogOpen} onOpenChange={setIsNonWorkingDaysDialogOpen}>
+        <DialogContent className="bg-card w-[95vw] max-w-lg rounded-xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Менаџирај неработни денови</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Add New Section */}
+            <div className="space-y-4 bg-secondary/30 p-4 rounded-lg border border-border/50">
+              <h3 className="text-sm font-medium text-foreground">Додај нов датум</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Датум</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full h-10 justify-start text-left font-normal border-input bg-background hover:bg-accent hover:text-accent-foreground",
+                          !nwdFormData.date && "text-muted-foreground"
+                        )}
+                      >
+                        <Calendar className="mr-2 h-4 w-4" />
+                        {nwdFormData.date ? format(new Date(nwdFormData.date), "dd.MM.yyyy") : <span>Избери датум</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={nwdFormData.date ? new Date(nwdFormData.date) : undefined}
+                        onSelect={(date) => date && setNwdFormData({ ...nwdFormData, date: format(date, "yyyy-MM-dd") })}
+                        locale={mk}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="space-y-2">
+                  <Label>Причина (опционално)</Label>
+                  <Input
+                    type="text"
+                    placeholder="Пр: Годишен одмор"
+                    value={nwdFormData.reason}
+                    onChange={(e) => setNwdFormData({ ...nwdFormData, reason: e.target.value })}
+                    className="h-10"
+                  />
+                </div>
+              </div>
+              <Button onClick={handleAddNonWorkingDay} className="w-full h-10 bg-accent hover:bg-accent/90">
+                <Plus className="w-4 h-4 mr-2" /> Додај
+              </Button>
+            </div>
+
+            {/* List Section */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium text-foreground">Постоечки неработни денови</h3>
+              {nonWorkingDays.length === 0 ? (
+                <p className="text-sm text-muted-foreground italic">Немате додадено неработни денови.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {nonWorkingDays.map((nwd) => (
+                    <li key={nwd.id} className="flex items-center justify-between p-3 rounded-md bg-background border border-border/50">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">
+                          {format(new Date(nwd.date), "dd.MM.yyyy")}
+                        </p>
+                        {nwd.reason && (
+                          <p className="text-xs text-muted-foreground">{nwd.reason}</p>
+                        )}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveNonWorkingDay(nwd.id)}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        Избриши
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsNonWorkingDaysDialogOpen(false)}>Затвори</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <AlertDialog
         open={isOverlapAlertOpen}
         onOpenChange={setIsOverlapAlertOpen}
