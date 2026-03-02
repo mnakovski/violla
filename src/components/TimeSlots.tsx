@@ -13,28 +13,16 @@ const TimeSlots = ({ selectedDate, activeService, onSlotSelect }: TimeSlotsProps
   const { appointments, loading } = useAppointments(selectedDate, activeService);
   const { isOpen, startHour, startMinute, endHour, endMinute } = getWorkingHours(selectedDate, nonWorkingDays);
 
-  // Check if the entire salon is closed OR this specific category is blocked
   const isFullDayClosed = isNonWorkingDay(selectedDate, nonWorkingDays); // FULL_DAY only
   const isCategoryBlocked = isNonWorkingDay(selectedDate, nonWorkingDays, activeService); // includes CATEGORY
-  const isCustomClosed = isCategoryBlocked;
 
-  const closedMessage = (() => {
+
+  // 1. Full salon closed (Sunday or FULL_DAY entry) — existing behaviour, unchanged
+  if (!isOpen || isFullDayClosed) {
     const dateStr = selectedDate.toISOString().split("T")[0];
-    // Full-day closure: use its reason or the generic "choose another day"
-    if (isFullDayClosed) {
-      const entry = nonWorkingDays.find(
-        (nwd) => nwd.date === dateStr && nwd.type === "FULL_DAY"
-      );
-      return entry?.reason || "Изберете друг термин.";
-    }
-    // Category-specific block
-    if (isCategoryBlocked) {
-      return "Салонот работи, но оваа услуга не е достапна на избраниот ден. Ве молиме изберете друг термин.";
-    }
-    return "Изберете друг термин.";
-  })();
-
-  if (!isOpen || isCustomClosed) {
+    const fullDayEntry = nonWorkingDays.find(
+      (nwd) => nwd.date === dateStr && nwd.type === "FULL_DAY"
+    );
     return (
       <div className="salon-card p-8 text-center">
         <div className="text-4xl mb-3">🌙</div>
@@ -42,7 +30,18 @@ const TimeSlots = ({ selectedDate, activeService, onSlotSelect }: TimeSlotsProps
           Денес одмараме за да ве разубавиме утре ✨
         </h3>
         <p className="text-sm text-muted-foreground">
-          {closedMessage}
+          {fullDayEntry?.reason || "Изберете друг термин."}
+        </p>
+      </div>
+    );
+  }
+
+  // 2. Only this category is blocked — different message, no moon/title
+  if (isCategoryBlocked) {
+    return (
+      <div className="salon-card p-8 text-center">
+        <p className="text-sm text-muted-foreground">
+          Салонот работи, но оваа услуга не е достапна на избраниот ден. Ве молиме изберете друг термин.
         </p>
       </div>
     );
