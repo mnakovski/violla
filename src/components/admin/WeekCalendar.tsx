@@ -30,6 +30,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 interface WeekCalendarProps {
   appointments: Appointment[];
+  nonWorkingDays?: { id: string; date: string; reason?: string | null }[];
   onSlotClick: (date: string, time: string) => void;
   onAppointmentClick: (appointment: Appointment) => void;
 }
@@ -73,6 +74,7 @@ const HOUR_HEIGHT = SLOT_HEIGHT * 4; // 64px per hour
 
 const WeekCalendar = ({
   appointments,
+  nonWorkingDays = [],
   onSlotClick,
   onAppointmentClick,
 }: WeekCalendarProps) => {
@@ -185,7 +187,7 @@ const WeekCalendar = ({
 
     sorted.forEach((apt) => {
       const { startMinutes, endMinutes } = getAppointmentGeometry(apt);
-      
+
       if (currentCluster.length === 0) {
         currentCluster.push(apt);
         clusterEnd = endMinutes;
@@ -232,7 +234,7 @@ const WeekCalendar = ({
       });
 
       const widthPercent = 100 / columns.length;
-      
+
       columns.forEach((col, colIndex) => {
         col.forEach((apt) => {
           layout[apt.id] = {
@@ -301,8 +303,8 @@ const WeekCalendar = ({
         <div className="flex items-center gap-2 flex-1 justify-center sm:justify-start sm:flex-none">
           <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
             <PopoverTrigger asChild>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 className="text-sm font-medium text-foreground hover:bg-accent/10 px-2 h-8"
               >
                 {format(currentWeekStart, "MMMM yyyy", { locale: mk })}
@@ -409,13 +411,15 @@ const WeekCalendar = ({
                   <div
                     className={cn(
                       "h-12 border-b border-r border-border flex flex-col items-center justify-center sticky top-0 bg-card z-10",
-                      isTodayColumn && "bg-accent/10"
+                      isTodayColumn && "bg-accent/10",
+                      nonWorkingDays.some((nwd) => nwd.date === format(day, "yyyy-MM-dd")) && "bg-destructive/10 text-destructive"
                     )}
                   >
                     <span
                       className={cn(
                         "text-xs uppercase tracking-wide",
-                        isTodayColumn ? "text-accent font-semibold" : "text-muted-foreground"
+                        isTodayColumn ? "text-accent font-semibold" : "text-muted-foreground",
+                        nonWorkingDays.some((nwd) => nwd.date === format(day, "yyyy-MM-dd")) && "text-destructive font-semibold"
                       )}
                     >
                       {format(day, "EEE", { locale: mk })}
@@ -425,18 +429,25 @@ const WeekCalendar = ({
                         "text-sm font-medium",
                         isTodayColumn
                           ? "text-accent-foreground bg-accent rounded-full w-6 h-6 flex items-center justify-center"
-                          : "text-foreground"
+                          : "text-foreground",
+                        nonWorkingDays.some((nwd) => nwd.date === format(day, "yyyy-MM-dd")) && !isTodayColumn && "text-destructive"
                       )}
                     >
                       {format(day, "d")}
                     </span>
+                    {nonWorkingDays.some((nwd) => nwd.date === format(day, "yyyy-MM-dd")) && (
+                      <span className="text-[9px] text-destructive leading-none -mt-1 font-semibold text-center w-full px-1 truncate absolute bottom-0.5">
+                        {nonWorkingDays.find((nwd) => nwd.date === format(day, "yyyy-MM-dd"))?.reason || "Неработен"}
+                      </span>
+                    )}
                   </div>
 
                   {/* Time grid */}
                   <div
                     className={cn(
                       "relative border-r border-border cursor-pointer",
-                      isTodayColumn && "bg-accent/5"
+                      isTodayColumn && "bg-accent/5",
+                      nonWorkingDays.some((nwd) => nwd.date === format(day, "yyyy-MM-dd")) && "bg-destructive/5 opacity-80"
                     )}
                     style={{ height: HOURS.length * HOUR_HEIGHT }}
                     onClick={(e) => handleSlotClick(day, e)}
@@ -473,99 +484,99 @@ const WeekCalendar = ({
                         return (
                           <HoverCard key={apt.id} openDelay={100} closeDelay={50}>
                             <HoverCardTrigger asChild>
-                            <div
-                              className={cn(
-                                "absolute rounded-md border shadow-sm cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] hover:z-20 overflow-hidden",
-                                colors.bg,
-                                colors.border
-                              )}
-                              style={{ 
-                                top, 
-                                height,
-                                left: layoutStyle.left,
-                                width: layoutStyle.width,
-                                padding: "1px" // slight padding to prevent border merge
-                              }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onAppointmentClick(apt);
-                              }}
-                            >
                               <div
                                 className={cn(
-                                  "p-1 h-full flex flex-col",
-                                  isShort && "flex-row items-center gap-1"
+                                  "absolute rounded-md border shadow-sm cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] hover:z-20 overflow-hidden",
+                                  colors.bg,
+                                  colors.border
                                 )}
+                                style={{
+                                  top,
+                                  height,
+                                  left: layoutStyle.left,
+                                  width: layoutStyle.width,
+                                  padding: "1px" // slight padding to prevent border merge
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onAppointmentClick(apt);
+                                }}
                               >
-                                <p
-                                  className={cn(
-                                    "text-[10px] font-semibold text-foreground truncate leading-tight",
-                                    isShort && "text-[9px]"
-                                  )}
-                                >
-                                  {apt.customer_name || "—"}
-                                </p>
-                                {!isShort && (
-                                  <p
-                                    className={cn(
-                                      "text-[9px] truncate",
-                                      colors.text
-                                    )}
-                                  >
-                                    {serviceLabels[apt.service_type]}
-                                  </p>
-                                )}
-                                {!isShort && height > SLOT_HEIGHT * 3 && (
-                                  <p className="text-[9px] text-muted-foreground">
-                                    {apt.duration_minutes} мин
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                            </HoverCardTrigger>
-                            <HoverCardContent
-                            side="right"
-                            align="start"
-                            className="w-64 p-3"
-                          >
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-2">
                                 <div
                                   className={cn(
-                                    "p-1.5 rounded-full",
-                                    colors.bg
+                                    "p-1 h-full flex flex-col",
+                                    isShort && "flex-row items-center gap-1"
                                   )}
                                 >
-                                  <User className={cn("w-3 h-3", colors.text)} />
-                                </div>
-                                <div>
-                                  <p className="font-semibold text-sm text-foreground">
-                                    {apt.customer_name || "Непознато"}
+                                  <p
+                                    className={cn(
+                                      "text-[10px] font-semibold text-foreground truncate leading-tight",
+                                      isShort && "text-[9px]"
+                                    )}
+                                  >
+                                    {apt.customer_name || "—"}
                                   </p>
-                                  <p className={cn("text-xs", colors.text)}>
-                                    {serviceLabels[apt.service_type]}
-                                  </p>
+                                  {!isShort && (
+                                    <p
+                                      className={cn(
+                                        "text-[9px] truncate",
+                                        colors.text
+                                      )}
+                                    >
+                                      {serviceLabels[apt.service_type]}
+                                    </p>
+                                  )}
+                                  {!isShort && height > SLOT_HEIGHT * 3 && (
+                                    <p className="text-[9px] text-muted-foreground">
+                                      {apt.duration_minutes} мин
+                                    </p>
+                                  )}
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <Clock className="w-3 h-3" />
-                                <span>
-                                  {apt.start_time.slice(0, 5)} — {apt.duration_minutes} мин
-                                </span>
-                              </div>
-                              {apt.notes && (
-                                <div className="bg-secondary/50 rounded p-2 text-xs text-muted-foreground italic">
-                                  "{apt.notes}"
+                            </HoverCardTrigger>
+                            <HoverCardContent
+                              side="right"
+                              align="start"
+                              className="w-64 p-3"
+                            >
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className={cn(
+                                      "p-1.5 rounded-full",
+                                      colors.bg
+                                    )}
+                                  >
+                                    <User className={cn("w-3 h-3", colors.text)} />
+                                  </div>
+                                  <div>
+                                    <p className="font-semibold text-sm text-foreground">
+                                      {apt.customer_name || "Непознато"}
+                                    </p>
+                                    <p className={cn("text-xs", colors.text)}>
+                                      {serviceLabels[apt.service_type]}
+                                    </p>
+                                  </div>
                                 </div>
-                              )}
-                              <p className="text-[10px] text-muted-foreground pt-1 border-t border-border">
-                                Кликнете за уредување
-                              </p>
-                            </div>
-                          </HoverCardContent>
-                        </HoverCard>
-                      );
-                    });
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <Clock className="w-3 h-3" />
+                                  <span>
+                                    {apt.start_time.slice(0, 5)} — {apt.duration_minutes} мин
+                                  </span>
+                                </div>
+                                {apt.notes && (
+                                  <div className="bg-secondary/50 rounded p-2 text-xs text-muted-foreground italic">
+                                    "{apt.notes}"
+                                  </div>
+                                )}
+                                <p className="text-[10px] text-muted-foreground pt-1 border-t border-border">
+                                  Кликнете за уредување
+                                </p>
+                              </div>
+                            </HoverCardContent>
+                          </HoverCard>
+                        );
+                      });
                     })()}
                   </div>
                 </div>

@@ -1,5 +1,6 @@
 import { useAppointments, getOccupiedSlots } from "@/hooks/useAppointments";
 import { generateTimeSlotsForDate, getWorkingHours } from "@/utils/workingHours";
+import { useNonWorkingDays, isNonWorkingDay } from "@/hooks/useNonWorkingDays";
 
 interface TimeSlotsProps {
   selectedDate: Date;
@@ -8,9 +9,15 @@ interface TimeSlotsProps {
 }
 
 const TimeSlots = ({ selectedDate, activeService, onSlotSelect }: TimeSlotsProps) => {
-  const { isOpen, start, end } = getWorkingHours(selectedDate);
+  const { nonWorkingDays } = useNonWorkingDays();
   const { appointments, loading } = useAppointments(selectedDate, activeService);
-  
+  const { isOpen, startHour, startMinute, endHour, endMinute } = getWorkingHours(selectedDate, nonWorkingDays);
+
+  const isCustomClosed = isNonWorkingDay(selectedDate, nonWorkingDays);
+  const customClosedReason = nonWorkingDays.find(
+    (nwd) => nwd.date === selectedDate.toISOString().split("T")[0]
+  )?.reason;
+
   if (!isOpen) {
     return (
       <div className="salon-card p-8 text-center">
@@ -19,31 +26,27 @@ const TimeSlots = ({ selectedDate, activeService, onSlotSelect }: TimeSlotsProps
           Неработен ден
         </h3>
         <p className="text-sm text-muted-foreground">
-          Салонот не работи во Недела.
+          {isCustomClosed
+            ? (customClosedReason || "Салонот не работи на овој датум.")
+            : "Салонот не работи во Недела."}
         </p>
       </div>
     );
   }
 
-  const timeSlots = generateTimeSlotsForDate(selectedDate);
+  const timeSlots = generateTimeSlotsForDate(selectedDate, nonWorkingDays);
   const occupiedSlots = getOccupiedSlots(appointments, selectedDate, activeService);
 
+  // Format time range for display (e.g. 08:30 - 14:30)
+  const startTimeStr = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;
+  const endTimeStr = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
+
   return (
-    <div className="salon-card p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-foreground">
-          Достапни термини ({start}:00 - {end}:00)
-        </h3>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded-full bg-accent/80"></div>
-            <span>Слободно</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded-full bg-muted"></div>
-            <span>Зафатено</span>
-          </div>
-        </div>
+    <div className="salon-card p-4 pt-0">
+      <div className="text-center mb-4 pt-2">
+        <span className="text-xs font-medium text-muted-foreground bg-secondary/50 px-2 py-1 rounded-full">
+          Работно време: {startTimeStr} - {endTimeStr}
+        </span>
       </div>
 
       {loading ? (
@@ -59,11 +62,10 @@ const TimeSlots = ({ selectedDate, activeService, onSlotSelect }: TimeSlotsProps
                 key={time}
                 onClick={() => !isOccupied && onSlotSelect && onSlotSelect(time)}
                 disabled={isOccupied}
-                className={`time-slot text-xs py-1.5 w-full transition-all active:scale-95 ${
-                  isOccupied 
-                    ? "time-slot-unavailable cursor-not-allowed opacity-50" 
-                    : "time-slot-available cursor-pointer hover:bg-accent hover:text-accent-foreground"
-                }`}
+                className={`time-slot text-xs py-1.5 w-full transition-all active:scale-95 ${isOccupied
+                  ? "time-slot-unavailable cursor-not-allowed opacity-50"
+                  : "time-slot-available cursor-pointer hover:bg-accent hover:text-accent-foreground"
+                  }`}
               >
                 <span className="font-medium">{time}</span>
               </button>
