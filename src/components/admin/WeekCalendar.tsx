@@ -402,6 +402,9 @@ const WeekCalendar = ({
             {visibleDays.map((day) => {
               const dayAppointments = getAppointmentsForDay(day);
               const isTodayColumn = isToday(day);
+              const dayStr = format(day, "yyyy-MM-dd");
+              const nwdEntry = nonWorkingDays.find((nwd) => nwd.date === dayStr);
+              const isNonWorking = !!nwdEntry;
 
               return (
                 <div
@@ -414,16 +417,22 @@ const WeekCalendar = ({
                   {/* Day header */}
                   <div
                     className={cn(
-                      "h-12 border-b border-r border-border flex flex-col items-center justify-center sticky top-0 bg-card z-10",
-                      isTodayColumn && "bg-accent/10",
-                      nonWorkingDays.some((nwd) => nwd.date === format(day, "yyyy-MM-dd")) && "bg-destructive/10 text-destructive"
+                      "h-12 border-b border-r border-border flex flex-col items-center justify-center sticky top-0 z-10",
+                      isNonWorking
+                        ? "bg-destructive/20"
+                        : isTodayColumn
+                          ? "bg-accent/10 bg-card"
+                          : "bg-card"
                     )}
                   >
                     <span
                       className={cn(
                         "text-xs uppercase tracking-wide",
-                        isTodayColumn ? "text-accent font-semibold" : "text-muted-foreground",
-                        nonWorkingDays.some((nwd) => nwd.date === format(day, "yyyy-MM-dd")) && "text-destructive font-semibold"
+                        isNonWorking
+                          ? "text-destructive font-bold"
+                          : isTodayColumn
+                            ? "text-accent font-semibold"
+                            : "text-muted-foreground"
                       )}
                     >
                       {format(day, "EEE", { locale: mk })}
@@ -431,17 +440,18 @@ const WeekCalendar = ({
                     <span
                       className={cn(
                         "text-sm font-medium",
-                        isTodayColumn
-                          ? "text-accent-foreground bg-accent rounded-full w-6 h-6 flex items-center justify-center"
-                          : "text-foreground",
-                        nonWorkingDays.some((nwd) => nwd.date === format(day, "yyyy-MM-dd")) && !isTodayColumn && "text-destructive"
+                        isNonWorking
+                          ? "text-destructive"
+                          : isTodayColumn
+                            ? "text-accent-foreground bg-accent rounded-full w-6 h-6 flex items-center justify-center"
+                            : "text-foreground"
                       )}
                     >
                       {format(day, "d")}
                     </span>
-                    {nonWorkingDays.some((nwd) => nwd.date === format(day, "yyyy-MM-dd")) && (
-                      <span className="text-[9px] text-destructive leading-none -mt-1 font-semibold text-center w-full px-1 truncate absolute bottom-0.5">
-                        {nonWorkingDays.find((nwd) => nwd.date === format(day, "yyyy-MM-dd"))?.reason || "Неработен"}
+                    {isNonWorking && (
+                      <span className="text-[9px] text-destructive/80 leading-none font-semibold text-center w-full px-1 truncate">
+                        {nwdEntry.reason || "Неработен"}
                       </span>
                     )}
                   </div>
@@ -449,13 +459,32 @@ const WeekCalendar = ({
                   {/* Time grid */}
                   <div
                     className={cn(
-                      "relative border-r border-border cursor-pointer",
-                      isTodayColumn && "bg-accent/5",
-                      nonWorkingDays.some((nwd) => nwd.date === format(day, "yyyy-MM-dd")) && "bg-destructive/5 opacity-80"
+                      "relative border-r border-border",
+                      isNonWorking ? "cursor-default" : "cursor-pointer",
+                      isTodayColumn && !isNonWorking && "bg-accent/5",
+                      isNonWorking && "bg-destructive/5"
                     )}
                     style={{ height: HOURS.length * HOUR_HEIGHT }}
-                    onClick={(e) => handleSlotClick(day, e)}
+                    onClick={(e) => !isNonWorking && handleSlotClick(day, e)}
                   >
+                    {/* Non-working day full overlay */}
+                    {isNonWorking && (
+                      <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-1 pointer-events-none"
+                        style={{
+                          background: "repeating-linear-gradient(135deg, hsl(var(--destructive)/0.04) 0px, hsl(var(--destructive)/0.04) 8px, transparent 8px, transparent 16px)"
+                        }}
+                      >
+                        <span className="text-2xl">🚫</span>
+                        <span className="text-xs font-semibold text-destructive text-center px-1">
+                          Неработен ден
+                        </span>
+                        {nwdEntry.reason && (
+                          <span className="text-[10px] text-destructive/70 text-center px-2 leading-tight">
+                            {nwdEntry.reason}
+                          </span>
+                        )}
+                      </div>
+                    )}
                     {/* Hour lines */}
                     {HOURS.map((hour) => (
                       <div
