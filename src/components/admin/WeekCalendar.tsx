@@ -8,7 +8,9 @@ import {
   parseISO,
   addWeeks,
   subWeeks,
+  isSunday,
 } from "date-fns";
+import { isNonWorkingDay, NonWorkingDay } from "@/hooks/useNonWorkingDays";
 import { mk } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Clock, User, Calendar as CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,7 +32,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 interface WeekCalendarProps {
   appointments: Appointment[];
-  nonWorkingDays?: { id: string; date: string; reason?: string | null }[];
+  nonWorkingDays?: NonWorkingDay[];
   onSlotClick: (date: string, time: string) => void;
   onAppointmentClick: (appointment: Appointment) => void;
 }
@@ -319,9 +321,11 @@ const WeekCalendar = ({
                 initialFocus
                 modifiers={{
                   today: (date) => isToday(date),
+                  closed: (date) => isSunday(date) || isNonWorkingDay(date, nonWorkingDays),
                 }}
                 modifiersClassNames={{
-                  today: "bg-accent/20 text-accent font-bold", // Style for "Today"
+                  today: "bg-accent/20 text-accent font-bold",
+                  closed: "line-through opacity-40 text-destructive",
                 }}
               />
             </PopoverContent>

@@ -23,12 +23,12 @@ const TimeSlots = ({ selectedDate, activeService, onSlotSelect }: TimeSlotsProps
       <div className="salon-card p-8 text-center">
         <div className="text-4xl mb-3">🌙</div>
         <h3 className="text-lg font-semibold text-foreground mb-1">
-          Неработен ден
+          Денес одмараме за да ве разубавиме утре ✨
         </h3>
         <p className="text-sm text-muted-foreground">
           {isCustomClosed
-            ? (customClosedReason || "Салонот не работи на овој датум.")
-            : "Салонот не работи во Недела."}
+            ? (customClosedReason || "Изберете друг термин.")
+            : "Изберете друг термин."}
         </p>
       </div>
     );
