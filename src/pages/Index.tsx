@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import Header from "@/components/Header";
@@ -18,12 +18,28 @@ import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, Phone, MessageCircle, Smartphone } from "lucide-react";
 import { useAppointments, getOccupiedSlots } from "@/hooks/useAppointments";
 import { generateTimeSlotsForDate } from "@/utils/workingHours";
+import { useNonWorkingDays, isNonWorkingDay } from "@/hooks/useNonWorkingDays";
 
 const Index = () => {
   const [activeCategory, setActiveCategory] = useState("hair");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { nonWorkingDays, loading: nwdLoading } = useNonWorkingDays();
+  // Guard: only auto-select once on initial load, never after user interaction
+  const hasAutoSelected = useRef(false);
+
+  // On load: pick the first available category for today
+  useEffect(() => {
+    if (nwdLoading || hasAutoSelected.current) return;
+    hasAutoSelected.current = true;
+    const today = new Date();
+    const priority = ["hair", "nails", "waxing"] as const;
+    const first = priority.find((cat) => !isNonWorkingDay(today, nonWorkingDays, cat));
+    if (first && first !== "hair") {
+      setActiveCategory(first);
+    }
+  }, [nwdLoading, nonWorkingDays]);
 
   // Fetch appointments to check occupancy inside dialog
   const { appointments } = useAppointments(selectedDate, "all");
@@ -31,14 +47,14 @@ const Index = () => {
   // Request Dialog State
   const [isRequestOpen, setIsRequestOpen] = useState(false);
   const [requestTime, setRequestTime] = useState<string>("");
-  
+
   // Form Fields
   const [formCategory, setFormCategory] = useState<string>("");
   const [formService, setFormService] = useState<string>("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [contactMethod, setContactMethod] = useState<"viber" | "whatsapp" | "sms">("viber");
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -66,7 +82,7 @@ const Index = () => {
   const handleSlotSelect = (time: string) => {
     setRequestTime(time);
     setFormCategory(activeCategory);
-    
+
     // Auto-select first service
     const catConfig = SERVICE_OPTIONS.find(c => c.id === activeCategory);
     if (catConfig && catConfig.subServices.length > 0) {
@@ -111,7 +127,7 @@ const Index = () => {
         service_type: formCategory,
         appointment_date: format(selectedDate, "yyyy-MM-dd"),
         start_time: requestTime,
-        duration_minutes: 30, 
+        duration_minutes: 30,
         notes: notes,
       }).select().single();
 
@@ -119,20 +135,20 @@ const Index = () => {
 
       // 2. Client-Side Notification (POST JSON - Plain Text)
       const token = "8023276456:AAF6ojBjLCH1wJzMkaYV5E6FIZbIPlAtIYk";
-      const chatId = -5270245125; 
+      const chatId = -5270245125;
       const serviceIcon = formCategory === 'hair' ? '✂️' : formCategory === 'nails' ? '💅' : '✨';
       const serviceMk = formCategory === 'hair' ? 'Коса' : formCategory === 'nails' ? 'Нокти' : 'Депилација';
       const details = subConfig?.label || "";
-      
+
       const message = `🔔 НОВО БАРАЊЕ!\n\n` +
-                      `👤 Клиент: ${customerName}\n` +
-                      `📞 Тел: ${customerPhone}\n` +
-                      `💬 Контакт: ${contactLabel}\n` +
-                      `${serviceIcon} Услуга: ${serviceMk} ${details}\n` +
-                      `📅 Датум: ${format(selectedDate, "dd.MM.yyyy")}\n` +
-                      `⏰ Време: ${requestTime}\n\n` +
-                      `👇 Кликни за потврда:\n` +
-                      `https://violla.mk/admin?request_id=${data.id}`;
+        `👤 Клиент: ${customerName}\n` +
+        `📞 Тел: ${customerPhone}\n` +
+        `💬 Контакт: ${contactLabel}\n` +
+        `${serviceIcon} Услуга: ${serviceMk} ${details}\n` +
+        `📅 Датум: ${format(selectedDate, "dd.MM.yyyy")}\n` +
+        `⏰ Време: ${requestTime}\n\n` +
+        `👇 Кликни за потврда:\n` +
+        `https://violla.mk/admin?request_id=${data.id}`;
 
       try {
         await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -160,7 +176,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background pb-32 pt-0">
       <Header />
-      
+
       <main className="max-w-md mx-auto px-4 py-6 space-y-6">
         <section className="text-center space-y-4">
           <div>
@@ -168,9 +184,9 @@ const Index = () => {
               Избери категорија
             </h2>
             <div className="flex justify-center">
-              <ServiceTabs 
-                activeService={activeCategory} 
-                onServiceChange={setActiveCategory} 
+              <ServiceTabs
+                activeService={activeCategory}
+                onServiceChange={setActiveCategory}
               />
             </div>
           </div>
@@ -181,17 +197,17 @@ const Index = () => {
             Избери датум
           </h2>
           <div className="flex justify-center">
-            <DatePicker 
-              selectedDate={selectedDate} 
-              onDateChange={setSelectedDate} 
+            <DatePicker
+              selectedDate={selectedDate}
+              onDateChange={setSelectedDate}
             />
           </div>
         </section>
 
         <section>
-          <TimeSlots 
-            selectedDate={selectedDate} 
-            activeService={activeCategory} 
+          <TimeSlots
+            selectedDate={selectedDate}
+            activeService={activeCategory}
             onSlotSelect={handleSlotSelect}
           />
         </section>
