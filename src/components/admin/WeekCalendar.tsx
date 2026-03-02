@@ -3,9 +3,7 @@ import {
   format,
   startOfWeek,
   addDays,
-  isSameDay,
   isToday,
-  parseISO,
   addWeeks,
   subWeeks,
   isSunday,
@@ -29,6 +27,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Appointment } from "@/hooks/useAppointments";
 import { useIsMobile } from "@/hooks/use-mobile";
+
+const categoryLabels: Record<string, string> = {
+  hair: "Коса",
+  nails: "Нокти",
+  waxing: "Депилација",
+};
 
 interface WeekCalendarProps {
   appointments: Appointment[];
@@ -403,8 +407,15 @@ const WeekCalendar = ({
               const dayAppointments = getAppointmentsForDay(day);
               const isTodayColumn = isToday(day);
               const dayStr = format(day, "yyyy-MM-dd");
-              const nwdEntry = nonWorkingDays.find((nwd) => nwd.date === dayStr);
+              // FULL_DAY entry closes the entire salon for this column
+              const nwdEntry = nonWorkingDays.find(
+                (nwd) => nwd.date === dayStr && nwd.type === "FULL_DAY"
+              );
               const isNonWorking = !!nwdEntry;
+              // CATEGORY entries only block specific services
+              const categoryBlocks = nonWorkingDays.filter(
+                (nwd) => nwd.date === dayStr && nwd.type === "CATEGORY" && nwd.category_id
+              );
 
               return (
                 <div
@@ -453,6 +464,19 @@ const WeekCalendar = ({
                       <span className="text-[9px] text-destructive/80 leading-none font-semibold text-center w-full px-1 truncate">
                         {nwdEntry.reason || "Неработен"}
                       </span>
+                    )}
+                    {!isNonWorking && categoryBlocks.length > 0 && (
+                      <div className="flex flex-wrap justify-center gap-0.5 mt-0.5">
+                        {categoryBlocks.map((cb) => (
+                          <span
+                            key={cb.id}
+                            className="text-[8px] leading-none px-1 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 font-semibold"
+                            title={cb.reason || undefined}
+                          >
+                            🚫 {categoryLabels[cb.category_id!] || cb.category_id}
+                          </span>
+                        ))}
+                      </div>
                     )}
                   </div>
 

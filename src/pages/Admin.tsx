@@ -117,6 +117,8 @@ const Admin = () => {
   const [nwdFormData, setNwdFormData] = useState({
     date: format(new Date(), "yyyy-MM-dd"),
     reason: "",
+    type: "FULL_DAY" as "FULL_DAY" | "CATEGORY",
+    category_id: "hair" as string,
   });
 
   const [appointmentToDelete, setAppointmentToDelete] = useState<string | null>(
@@ -470,9 +472,14 @@ const Admin = () => {
 
   const handleAddNonWorkingDay = async () => {
     try {
-      await addNonWorkingDay(new Date(nwdFormData.date), nwdFormData.reason);
+      await addNonWorkingDay(
+        new Date(nwdFormData.date),
+        nwdFormData.reason,
+        nwdFormData.type,
+        nwdFormData.type === "CATEGORY" ? nwdFormData.category_id : undefined
+      );
       toast({ title: "Успешно", description: "Неработниот ден е додаден" });
-      setNwdFormData({ date: format(new Date(), "yyyy-MM-dd"), reason: "" });
+      setNwdFormData({ date: format(new Date(), "yyyy-MM-dd"), reason: "", type: "FULL_DAY", category_id: "hair" });
     } catch (error) {
       toast({
         title: "Грешка",
@@ -858,6 +865,54 @@ const Admin = () => {
             {/* Add New Section */}
             <div className="space-y-4 bg-secondary/30 p-4 rounded-lg border border-border/50">
               <h3 className="text-sm font-medium text-foreground">Додај нов датум</h3>
+
+              {/* Type toggle */}
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider">Тип на блокирање</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setNwdFormData({ ...nwdFormData, type: "FULL_DAY" })}
+                    className={`h-9 text-sm rounded-md border transition-colors ${nwdFormData.type === "FULL_DAY"
+                        ? "bg-accent text-accent-foreground border-accent"
+                        : "border-input bg-background hover:bg-accent/10"
+                      }`}
+                  >
+                    🚫 Цел салон
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNwdFormData({ ...nwdFormData, type: "CATEGORY" })}
+                    className={`h-9 text-sm rounded-md border transition-colors ${nwdFormData.type === "CATEGORY"
+                        ? "bg-accent text-accent-foreground border-accent"
+                        : "border-input bg-background hover:bg-accent/10"
+                      }`}
+                  >
+                    ✂️ Категорија
+                  </button>
+                </div>
+              </div>
+
+              {/* Category dropdown — only shown for CATEGORY type */}
+              {nwdFormData.type === "CATEGORY" && (
+                <div className="space-y-2">
+                  <Label>Категорија</Label>
+                  <Select
+                    value={nwdFormData.category_id}
+                    onValueChange={(v) => setNwdFormData({ ...nwdFormData, category_id: v })}
+                  >
+                    <SelectTrigger className="h-10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SERVICE_OPTIONS.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Датум</Label>
@@ -911,9 +966,20 @@ const Admin = () => {
                   {nonWorkingDays.map((nwd) => (
                     <li key={nwd.id} className="flex items-center justify-between p-3 rounded-md bg-background border border-border/50">
                       <div>
-                        <p className="text-sm font-medium text-foreground">
-                          {format(new Date(nwd.date), "dd.MM.yyyy")}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-foreground">
+                            {format(new Date(nwd.date), "dd.MM.yyyy")}
+                          </p>
+                          {nwd.type === "CATEGORY" && nwd.category_id ? (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 font-semibold">
+                              ✂️ {serviceLabels[nwd.category_id] || nwd.category_id}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-destructive/20 text-destructive border border-destructive/30 font-semibold">
+                              🚫 Цел салон
+                            </span>
+                          )}
+                        </div>
                         {nwd.reason && (
                           <p className="text-xs text-muted-foreground">{nwd.reason}</p>
                         )}
