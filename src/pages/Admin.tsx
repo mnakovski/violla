@@ -571,6 +571,7 @@ const Admin = () => {
         </div>
         <WeekCalendar
           appointments={appointments}
+          nonWorkingDays={nonWorkingDays}
           onSlotClick={handleSlotClick}
           onAppointmentClick={handleOpenDialog}
         />
