@@ -6,6 +6,8 @@ export interface NonWorkingDay {
     id: string;
     date: string;
     reason: string | null;
+    type: "FULL_DAY" | "CATEGORY";
+    category_id: string | null;
     created_at: string;
 }
 
@@ -31,11 +33,18 @@ export const useNonWorkingDays = () => {
         }
     }, []);
 
-    const addNonWorkingDay = async (date: Date, reason?: string) => {
+    const addNonWorkingDay = async (
+        date: Date,
+        reason?: string,
+        type: "FULL_DAY" | "CATEGORY" = "FULL_DAY",
+        category_id?: string
+    ) => {
         const dateStr = format(date, "yyyy-MM-dd");
         const { error } = await supabase.from("non_working_days").insert({
             date: dateStr,
             reason: reason || null,
+            type,
+            category_id: type === "CATEGORY" ? (category_id || null) : null,
         });
 
         if (error) {
@@ -92,11 +101,33 @@ export const useNonWorkingDays = () => {
     };
 };
 
-// Helper: check if a Date is a non-working day according to fetched list
+/**
+ * Check if a date is closed/blocked.
+ *
+ * @param date         The date to check
+ * @param nonWorkingDays  Full list from the hook
+ * @param serviceType  Optional. When provided, returns true if FULL_DAY entry
+ *                     exists OR a CATEGORY entry matching this serviceType exists.
+ *                     When omitted, returns true only for FULL_DAY entries
+ *                     (used by date-pickers and calendar modifiers).
+ */
 export const isNonWorkingDay = (
     date: Date,
-    nonWorkingDays: NonWorkingDay[]
+    nonWorkingDays: NonWorkingDay[],
+    serviceType?: string
 ): boolean => {
     const dateStr = format(date, "yyyy-MM-dd");
-    return nonWorkingDays.some((nwd) => nwd.date === dateStr);
+    const dayEntries = nonWorkingDays.filter((nwd) => nwd.date === dateStr);
+
+    // Always block if there's a FULL_DAY entry
+    if (dayEntries.some((nwd) => nwd.type === "FULL_DAY")) return true;
+
+    // If a specific service is being checked, also block for matching CATEGORY entries
+    if (serviceType) {
+        return dayEntries.some(
+            (nwd) => nwd.type === "CATEGORY" && nwd.category_id === serviceType
+        );
+    }
+
+    return false;
 };

@@ -46,6 +46,8 @@ const DatePicker = ({ selectedDate, onDateChange }: DatePickerProps) => {
   const { nonWorkingDays } = useNonWorkingDays();
 
   const isSundayOnly = isSunday(selectedDate);
+  // No serviceType passed → only FULL_DAY entries trigger the "closed" badge.
+  // Category blocks don't close the entire salon.
   const isCustomClosed = isNonWorkingDay(selectedDate, nonWorkingDays);
   const isClosed = isSundayOnly || isCustomClosed;
 

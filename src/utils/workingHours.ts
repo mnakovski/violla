@@ -13,8 +13,9 @@ export const getWorkingHours = (date: Date, nonWorkingDays: NonWorkingDay[] = []
   const day = getDay(date); // 0 = Sunday, 1 = Monday, ...
   const dateStr = format(date, "yyyy-MM-dd");
 
-  // Custom non-working day
-  if (nonWorkingDays.some(nwd => nwd.date === dateStr)) {
+  // Custom non-working day — only FULL_DAY entries close the entire salon.
+  // CATEGORY entries only block a specific service; the salon stays open.
+  if (nonWorkingDays.some(nwd => nwd.date === dateStr && nwd.type === "FULL_DAY")) {
     return { startHour: 0, startMinute: 0, endHour: 0, endMinute: 0, isOpen: false };
   }
 

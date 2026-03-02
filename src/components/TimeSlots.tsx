@@ -13,12 +13,28 @@ const TimeSlots = ({ selectedDate, activeService, onSlotSelect }: TimeSlotsProps
   const { appointments, loading } = useAppointments(selectedDate, activeService);
   const { isOpen, startHour, startMinute, endHour, endMinute } = getWorkingHours(selectedDate, nonWorkingDays);
 
-  const isCustomClosed = isNonWorkingDay(selectedDate, nonWorkingDays);
-  const customClosedReason = nonWorkingDays.find(
-    (nwd) => nwd.date === selectedDate.toISOString().split("T")[0]
-  )?.reason;
+  // Check if the entire salon is closed OR this specific category is blocked
+  const isFullDayClosed = isNonWorkingDay(selectedDate, nonWorkingDays); // FULL_DAY only
+  const isCategoryBlocked = isNonWorkingDay(selectedDate, nonWorkingDays, activeService); // includes CATEGORY
+  const isCustomClosed = isCategoryBlocked;
 
-  if (!isOpen) {
+  const closedMessage = (() => {
+    const dateStr = selectedDate.toISOString().split("T")[0];
+    // Full-day closure: use its reason or the generic "choose another day"
+    if (isFullDayClosed) {
+      const entry = nonWorkingDays.find(
+        (nwd) => nwd.date === dateStr && nwd.type === "FULL_DAY"
+      );
+      return entry?.reason || "Изберете друг термин.";
+    }
+    // Category-specific block
+    if (isCategoryBlocked) {
+      return "Салонот работи, но оваа услуга не е достапна на избраниот ден. Ве молиме изберете друг термин.";
+    }
+    return "Изберете друг термин.";
+  })();
+
+  if (!isOpen || isCustomClosed) {
     return (
       <div className="salon-card p-8 text-center">
         <div className="text-4xl mb-3">🌙</div>
@@ -26,9 +42,7 @@ const TimeSlots = ({ selectedDate, activeService, onSlotSelect }: TimeSlotsProps
           Денес одмараме за да ве разубавиме утре ✨
         </h3>
         <p className="text-sm text-muted-foreground">
-          {isCustomClosed
-            ? (customClosedReason || "Изберете друг термин.")
-            : "Изберете друг термин."}
+          {closedMessage}
         </p>
       </div>
     );
