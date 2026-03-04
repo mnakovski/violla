@@ -1,4 +1,4 @@
-export type ServiceCategory = "hair" | "nails" | "waxing";
+export type ServiceCategory = "hair" | "nails" | "waxing" | "makeup";
 
 export interface SubService {
   id: string;
@@ -45,6 +45,13 @@ export const SERVICE_OPTIONS: ServiceConfig[] = [
       { id: "arms", label: "Раце" },
       { id: "underarms", label: "Пазуви" },
       { id: "back", label: "Грб" },
+    ],
+  },
+  {
+    id: "makeup",
+    label: "Шминка",
+    subServices: [
+      { id: "makeup_full", label: "Шминкање" },
     ],
   },
 ];

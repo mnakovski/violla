@@ -58,6 +58,7 @@ const serviceLabels: Record<string, string> = {
   hair: "Коса",
   nails: "Нокти",
   waxing: "Депилација",
+  makeup: "Шминка",
 };
 
 const durationOptions = [
@@ -136,7 +137,7 @@ const Admin = () => {
   const [formData, setFormData] = useState({
     customer_name: "",
     client_phone: "",
-    service_type: "hair" as "hair" | "nails" | "waxing",
+    service_type: "hair" as "hair" | "nails" | "waxing" | "makeup",
     sub_service: "",
     appointment_date: format(new Date(), "yyyy-MM-dd"),
     start_time: "09:00",
@@ -196,7 +197,7 @@ const Admin = () => {
             setFormData({
               customer_name: data.customer_name,
               client_phone: data.client_phone,
-              service_type: data.service_type as "hair" | "nails" | "waxing",
+              service_type: data.service_type as "hair" | "nails" | "waxing" | "makeup",
               sub_service: foundSubService,
               appointment_date: data.appointment_date,
               start_time: data.start_time.slice(0, 5),
@@ -360,7 +361,7 @@ const Admin = () => {
       formData.appointment_date,
       formData.start_time,
       formData.duration_minutes,
-      formData.service_type,
+      formData.service_type as "hair" | "nails" | "waxing" | "makeup",
       editingAppointment?.id,
     );
 
@@ -874,8 +875,8 @@ const Admin = () => {
                     type="button"
                     onClick={() => setNwdFormData({ ...nwdFormData, type: "FULL_DAY" })}
                     className={`h-9 text-sm rounded-md border transition-colors ${nwdFormData.type === "FULL_DAY"
-                        ? "bg-accent text-accent-foreground border-accent"
-                        : "border-input bg-background hover:bg-accent/10"
+                      ? "bg-accent text-accent-foreground border-accent"
+                      : "border-input bg-background hover:bg-accent/10"
                       }`}
                   >
                     🚫 Цел салон
@@ -884,8 +885,8 @@ const Admin = () => {
                     type="button"
                     onClick={() => setNwdFormData({ ...nwdFormData, type: "CATEGORY" })}
                     className={`h-9 text-sm rounded-md border transition-colors ${nwdFormData.type === "CATEGORY"
-                        ? "bg-accent text-accent-foreground border-accent"
-                        : "border-input bg-background hover:bg-accent/10"
+                      ? "bg-accent text-accent-foreground border-accent"
+                      : "border-input bg-background hover:bg-accent/10"
                       }`}
                   >
                     ✂️ Категорија

@@ -1,4 +1,4 @@
-import { Scissors, Sparkles, Heart } from "lucide-react";
+import { Scissors, Sparkles, Heart, Wand2 } from "lucide-react";
 
 interface ServiceTabsProps {
   activeService: string;
@@ -9,6 +9,7 @@ const services = [
   { id: "hair", label: "Коса", icon: Scissors },
   { id: "nails", label: "Нокти", icon: Sparkles },
   { id: "waxing", label: "Депилација", icon: Heart },
+  { id: "makeup", label: "Шминка", icon: Wand2 },
 ];
 
 const ServiceTabs = ({ activeService, onServiceChange }: ServiceTabsProps) => {
@@ -17,14 +18,13 @@ const ServiceTabs = ({ activeService, onServiceChange }: ServiceTabsProps) => {
       {services.map((service) => {
         const Icon = service.icon;
         const isActive = activeService === service.id;
-        
+
         return (
           <button
             key={service.id}
             onClick={() => onServiceChange(service.id)}
-            className={`service-tab flex items-center gap-2 whitespace-nowrap ${
-              isActive ? "service-tab-active" : "hover:bg-secondary"
-            }`}
+            className={`service-tab flex items-center gap-2 whitespace-nowrap ${isActive ? "service-tab-active" : "hover:bg-secondary"
+              }`}
           >
             <Icon className="w-4 h-4" />
             <span>{service.label}</span>
