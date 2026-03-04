@@ -32,6 +32,7 @@ const categoryLabels: Record<string, string> = {
   hair: "Коса",
   nails: "Нокти",
   waxing: "Депилација",
+  makeup: "Шминка",
 };
 
 interface WeekCalendarProps {
@@ -45,6 +46,7 @@ const serviceLabels: Record<string, string> = {
   hair: "Коса",
   nails: "Нокти",
   waxing: "Депилација",
+  makeup: "Шминка",
 };
 
 const serviceColors: Record<string, { bg: string; border: string; text: string }> = {
@@ -62,6 +64,11 @@ const serviceColors: Record<string, { bg: string; border: string; text: string }
     bg: "bg-violet-500/20",
     border: "border-violet-500/40",
     text: "text-violet-400",
+  },
+  makeup: {
+    bg: "bg-rose-500/20",
+    border: "border-rose-500/40",
+    text: "text-rose-400",
   },
 };
 

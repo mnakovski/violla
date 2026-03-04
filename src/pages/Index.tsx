@@ -34,7 +34,7 @@ const Index = () => {
     if (nwdLoading || hasAutoSelected.current) return;
     hasAutoSelected.current = true;
     const today = new Date();
-    const priority = ["hair", "nails", "waxing"] as const;
+    const priority = ["hair", "nails", "waxing", "makeup"] as const;
     const first = priority.find((cat) => !isNonWorkingDay(today, nonWorkingDays, cat));
     if (first && first !== "hair") {
       setActiveCategory(first);
@@ -120,24 +120,25 @@ const Index = () => {
       const contactLabel = contactMethod === "viber" ? "Viber" : contactMethod === "whatsapp" ? "WhatsApp" : "SMS";
       const notes = `[${subConfig?.label || formCategory}] (Pref: ${contactLabel})`;
 
-      // 1. Insert Request (Use select to get ID, rely on public SELECT policy)
+      // 1. Insert Request — use .select('id') to get the generated ID via
+      // PostgREST RETURNING (does not require a SELECT RLS policy).
       const { data, error } = await supabase.from("appointment_requests").insert({
         customer_name: customerName,
         client_phone: customerPhone,
-        service_type: formCategory,
+        service_type: formCategory as "hair" | "nails" | "waxing" | "makeup",
         appointment_date: format(selectedDate, "yyyy-MM-dd"),
         start_time: requestTime,
         duration_minutes: 30,
         notes: notes,
-      }).select().single();
+      }).select('id').single();
 
       if (error) throw error;
 
       // 2. Client-Side Notification (POST JSON - Plain Text)
       const token = "8023276456:AAF6ojBjLCH1wJzMkaYV5E6FIZbIPlAtIYk";
       const chatId = -5270245125;
-      const serviceIcon = formCategory === 'hair' ? '✂️' : formCategory === 'nails' ? '💅' : '✨';
-      const serviceMk = formCategory === 'hair' ? 'Коса' : formCategory === 'nails' ? 'Нокти' : 'Депилација';
+      const serviceIcon = formCategory === 'hair' ? '✂️' : formCategory === 'nails' ? '💅' : formCategory === 'makeup' ? '💄' : '✨';
+      const serviceMk = formCategory === 'hair' ? 'Коса' : formCategory === 'nails' ? 'Нокти' : formCategory === 'makeup' ? 'Шминка' : 'Депилација';
       const details = subConfig?.label || "";
 
       const message = `🔔 НОВО БАРАЊЕ!\n\n` +

@@ -7,7 +7,7 @@ export interface Appointment {
   id: string;
   customer_name?: string;
   client_phone?: string;
-  service_type: "hair" | "nails" | "waxing";
+  service_type: "hair" | "nails" | "waxing" | "makeup";
   appointment_date: string;
   start_time: string;
   duration_minutes: number;
@@ -19,7 +19,7 @@ export interface Appointment {
 // Public appointment type (no sensitive fields)
 export interface PublicAppointment {
   id: string;
-  service_type: "hair" | "nails" | "waxing";
+  service_type: "hair" | "nails" | "waxing" | "makeup";
   appointment_date: string;
   start_time: string;
   duration_minutes: number;
@@ -36,22 +36,22 @@ export const useAppointments = (date?: Date, serviceType?: string) => {
       // Use the public view which only exposes non-sensitive columns
       // If table doesn't exist yet, fallback to appointments with restricted cols
       let query = supabase.from("appointments").select("id, service_type, appointment_date, start_time, duration_minutes");
-      
+
       if (date) {
         query = query.eq("appointment_date", format(date, "yyyy-MM-dd"));
       }
-      
-      if (serviceType && serviceType !== "all" && ["hair", "nails", "waxing"].includes(serviceType)) {
-        query = query.eq("service_type", serviceType);
+
+      if (serviceType && serviceType !== "all" && ["hair", "nails", "waxing", "makeup"].includes(serviceType)) {
+        query = query.eq("service_type", serviceType as "hair" | "nails" | "waxing" | "makeup");
       }
-      
+
       // Order by date and time
       const { data, error } = await query
         .order("appointment_date", { ascending: true })
         .order("start_time", { ascending: true });
-      
+
       if (error) throw error;
-      
+
       // Cast the result to PublicAppointment[]
       setAppointments((data as unknown as PublicAppointment[]) || []);
     } catch (err) {
@@ -101,7 +101,7 @@ export const useAdminAppointments = () => {
         .select("*")
         .order("appointment_date", { ascending: true })
         .order("start_time", { ascending: true });
-      
+
       if (error) throw error;
       setAppointments(data || []);
     } catch (err) {
@@ -115,7 +115,7 @@ export const useAdminAppointments = () => {
     date: string,
     startTime: string,
     duration: number,
-    serviceType: "hair" | "nails" | "waxing",
+    serviceType: "hair" | "nails" | "waxing" | "makeup",
     excludeId?: string
   ) => {
     const { data: hasOverlap, error } = await supabase.rpc("check_appointment_overlap", {
@@ -125,20 +125,20 @@ export const useAdminAppointments = () => {
       p_service_type: serviceType,
       p_exclude_id: excludeId || null
     });
-    
+
     if (error) {
       console.error("Overlap Check Error:", error);
       // Fail safe: If check fails, assume no overlap but log it
       return false;
     }
-    
+
     return !!hasOverlap;
   };
 
   const createAppointment = async (appointment: {
     customer_name?: string;
     client_phone?: string;
-    service_type: "hair" | "nails" | "waxing";
+    service_type: "hair" | "nails" | "waxing" | "makeup";
     appointment_date: string;
     start_time: string;
     duration_minutes: number;
@@ -240,7 +240,7 @@ export const getOccupiedSlots = (
       const startTime = parse(apt.start_time, "HH:mm:ss", new Date());
       // Divide duration by 15 to get number of 15-min slots needed
       const slotsNeeded = apt.duration_minutes / 15;
-      
+
       for (let i = 0; i < slotsNeeded; i++) {
         const slotTime = new Date(startTime);
         slotTime.setMinutes(slotTime.getMinutes() + i * 15);
