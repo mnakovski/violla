@@ -85,7 +85,12 @@
     font-family: 'DM Sans', sans-serif;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: 'Outfit', sans-serif;
   }
 }
@@ -140,12 +145,4 @@
     @apply hover:opacity-90 active:scale-[0.98];
   }
 
-  .service-tab {
-    @apply px-4 py-2 rounded-full text-sm font-medium transition-all duration-200;
-    @apply text-muted-foreground;
-  }
-
-  .service-tab-active {
-    @apply bg-primary text-primary-foreground;
-  }
 }
