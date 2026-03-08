@@ -250,3 +250,35 @@ export const getOccupiedSlots = (
 
   return occupiedSlots;
 };
+
+// ---------------------------------------------------------------------------
+// Shared-slot logic (customer-facing only — admin is unaffected)
+// ---------------------------------------------------------------------------
+
+// Categories that share a single employee. A booking in any one of these
+// must block the same slot in the other two on the customer booking page.
+// "hair" (Коса) is intentionally excluded — it is fully independent.
+export const SHARED_SLOT_SERVICES: Set<string> = new Set(["nails", "waxing", "makeup"]);
+
+// Returns the sibling service types whose booked slots should also block `serviceType`.
+export const getSharedSlotPartners = (serviceType: string): string[] => {
+  if (!SHARED_SLOT_SERVICES.has(serviceType)) return [];
+  return Array.from(SHARED_SLOT_SERVICES).filter((s) => s !== serviceType);
+};
+
+// Customer-facing occupied-slot calculator.
+// For nails / waxing / makeup: merges occupied slots from all three categories.
+// For hair (or any other service): behaves identically to getOccupiedSlots.
+export const getOccupiedSlotsForCustomer = (
+  appointments: PublicAppointment[],
+  date: Date,
+  serviceType: string
+): Set<string> => {
+  const merged = getOccupiedSlots(appointments, date, serviceType);
+  for (const partner of getSharedSlotPartners(serviceType)) {
+    for (const slot of getOccupiedSlots(appointments, date, partner)) {
+      merged.add(slot);
+    }
+  }
+  return merged;
+};

@@ -1,4 +1,4 @@
-import { useAppointments, getOccupiedSlots } from "@/hooks/useAppointments";
+import { useAppointments, getOccupiedSlotsForCustomer } from "@/hooks/useAppointments";
 import { generateTimeSlotsForDate, getWorkingHours } from "@/utils/workingHours";
 import { useNonWorkingDays, isNonWorkingDay } from "@/hooks/useNonWorkingDays";
 
@@ -10,7 +10,10 @@ interface TimeSlotsProps {
 
 const TimeSlots = ({ selectedDate, activeService, onSlotSelect }: TimeSlotsProps) => {
   const { nonWorkingDays } = useNonWorkingDays();
-  const { appointments, loading } = useAppointments(selectedDate, activeService);
+  // Fetch ALL service types so we can cross-block nails/waxing/makeup slots.
+  // Hair (Коса) appointments are included but getOccupiedSlotsForCustomer
+  // will only pull them in when activeService === "hair".
+  const { appointments, loading } = useAppointments(selectedDate, "all");
   const { isOpen, startHour, startMinute, endHour, endMinute } = getWorkingHours(selectedDate, nonWorkingDays);
 
   const isFullDayClosed = isNonWorkingDay(selectedDate, nonWorkingDays); // FULL_DAY only
@@ -48,7 +51,8 @@ const TimeSlots = ({ selectedDate, activeService, onSlotSelect }: TimeSlotsProps
   }
 
   const timeSlots = generateTimeSlotsForDate(selectedDate, nonWorkingDays);
-  const occupiedSlots = getOccupiedSlots(appointments, selectedDate, activeService);
+  // Customer-facing: nails/waxing/makeup block each other's slots.
+  const occupiedSlots = getOccupiedSlotsForCustomer(appointments, selectedDate, activeService);
 
   // Format time range for display (e.g. 08:30 - 14:30)
   const startTimeStr = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;

@@ -16,7 +16,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, Phone, MessageCircle, Smartphone } from "lucide-react";
-import { useAppointments, getOccupiedSlots } from "@/hooks/useAppointments";
+import { useAppointments, getOccupiedSlots, getOccupiedSlotsForCustomer } from "@/hooks/useAppointments";
 import { generateTimeSlotsForDate } from "@/utils/workingHours";
 import { useNonWorkingDays, isNonWorkingDay } from "@/hooks/useNonWorkingDays";
 
@@ -58,10 +58,12 @@ const Index = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // Computed occupied slots for dialog select
+  // Computed occupied slots for dialog select.
+  // Uses getOccupiedSlotsForCustomer so that nails/waxing/makeup block
+  // each other's slots in the time picker too.
   const occupiedSlots = useMemo(() => {
     if (!selectedDate || !formCategory) return new Set<string>();
-    return getOccupiedSlots(appointments, selectedDate, formCategory);
+    return getOccupiedSlotsForCustomer(appointments, selectedDate, formCategory);
   }, [appointments, selectedDate, formCategory]);
 
   // Generate free time slots for dialog
