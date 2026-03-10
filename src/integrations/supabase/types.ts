@@ -47,6 +47,45 @@ export type Database = {
         }
         Relationships: []
       }
+      appointment_requests: {
+        Row: {
+          appointment_date: string
+          client_phone: string | null
+          created_at: string
+          customer_name: string | null
+          duration_minutes: number
+          id: string
+          notes: string | null
+          service_type: Database["public"]["Enums"]["service_type"]
+          start_time: string
+          status: string
+        }
+        Insert: {
+          appointment_date: string
+          client_phone?: string | null
+          created_at?: string
+          customer_name?: string | null
+          duration_minutes?: number
+          id?: string
+          notes?: string | null
+          service_type: Database["public"]["Enums"]["service_type"]
+          start_time: string
+          status?: string
+        }
+        Update: {
+          appointment_date?: string
+          client_phone?: string | null
+          created_at?: string
+          customer_name?: string | null
+          duration_minutes?: number
+          id?: string
+          notes?: string | null
+          service_type?: Database["public"]["Enums"]["service_type"]
+          start_time?: string
+          status?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

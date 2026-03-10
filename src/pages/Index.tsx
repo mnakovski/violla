@@ -116,6 +116,17 @@ const Index = () => {
       return;
     }
 
+    // Guard: reject locally if the selected date/category is blocked.
+    // This mirrors the DB trigger and provides instant UX feedback.
+    if (isNonWorkingDay(selectedDate, nonWorkingDays, formCategory)) {
+      toast({
+        title: "Датумот не е достапен",
+        description: "Избраниот датум е недостапен за оваа услуга. Ве молиме изберете друг датум.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const subConfig = SERVICE_OPTIONS.find(c => c.id === formCategory)?.subServices.find(s => s.id === formService);
@@ -168,9 +179,16 @@ const Index = () => {
       }
 
       setIsSuccess(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast({ title: "Грешка", description: "Проблем при испраќање.", variant: "destructive" });
+      // If the DB trigger rejects the insert (blocked date), surface the message.
+      const isBlockedDate =
+        error?.message?.includes("salon is closed") ||
+        error?.message?.includes("not available");
+      const description = isBlockedDate
+        ? "Избраниот датум е недостапен за оваа услуга. Ве молиме изберете друг датум."
+        : "Проблем при испраќање. Обидете се повторно.";
+      toast({ title: "Грешка", description, variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
