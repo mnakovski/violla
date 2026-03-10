@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import Header from "@/components/Header";
@@ -16,33 +16,41 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, Phone, MessageCircle, Smartphone } from "lucide-react";
-import { useAppointments, getOccupiedSlots, getOccupiedSlotsForCustomer } from "@/hooks/useAppointments";
-import { generateTimeSlotsForDate } from "@/utils/workingHours";
-import { useNonWorkingDays, isNonWorkingDay } from "@/hooks/useNonWorkingDays";
+import { useAvailability } from "@/hooks/useAvailability";
 
 const Index = () => {
   const [activeCategory, setActiveCategory] = useState("hair");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { nonWorkingDays, loading: nwdLoading } = useNonWorkingDays();
+
+  // Single source of truth for availability on the selected date.
+  // blockedCategories: no slots available (blocked day or fully booked)
+  // getAvailableSlots: free time slots for a given category
+  const { blockedCategories, getAvailableSlots, loading: availLoading } = useAvailability(selectedDate);
+
   // Guard: only auto-select once on initial load, never after user interaction
   const hasAutoSelected = useRef(false);
 
-  // On load: pick the first available category for today
+  // When date changes, if the current active category becomes blocked, switch to first available.
   useEffect(() => {
-    if (nwdLoading || hasAutoSelected.current) return;
-    hasAutoSelected.current = true;
-    const today = new Date();
-    const priority = ["hair", "nails", "waxing", "makeup"] as const;
-    const first = priority.find((cat) => !isNonWorkingDay(today, nonWorkingDays, cat));
-    if (first && first !== "hair") {
-      setActiveCategory(first);
+    if (availLoading) return;
+    if (blockedCategories.has(activeCategory)) {
+      const priority = ["hair", "nails", "waxing", "makeup"] as const;
+      const first = priority.find((cat) => !blockedCategories.has(cat));
+      if (first) setActiveCategory(first);
     }
-  }, [nwdLoading, nonWorkingDays]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate, blockedCategories, availLoading]);
 
-  // Fetch appointments to check occupancy inside dialog
-  const { appointments } = useAppointments(selectedDate, "all");
+  // On initial load: pick first available category for today (only once)
+  useEffect(() => {
+    if (availLoading || hasAutoSelected.current) return;
+    hasAutoSelected.current = true;
+    const priority = ["hair", "nails", "waxing", "makeup"] as const;
+    const first = priority.find((cat) => !blockedCategories.has(cat));
+    if (first && first !== "hair") setActiveCategory(first);
+  }, [availLoading, blockedCategories]);
 
   // Request Dialog State
   const [isRequestOpen, setIsRequestOpen] = useState(false);
@@ -58,20 +66,9 @@ const Index = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // Computed occupied slots for dialog select.
-  // Uses getOccupiedSlotsForCustomer so that nails/waxing/makeup block
-  // each other's slots in the time picker too.
-  const occupiedSlots = useMemo(() => {
-    if (!selectedDate || !formCategory) return new Set<string>();
-    return getOccupiedSlotsForCustomer(appointments, selectedDate, formCategory);
-  }, [appointments, selectedDate, formCategory]);
-
-  // Generate free time slots for dialog
-  const availableDialogSlots = useMemo(() => {
-    const slots = generateTimeSlotsForDate(selectedDate);
-    // Filter occupied
-    return slots.filter(time => !occupiedSlots.has(time));
-  }, [selectedDate, occupiedSlots]);
+  // Available slots for the dialog time picker — driven by the hook, not a manual useMemo.
+  // getAvailableSlots() already applies cross-service blocking for nails/waxing/makeup.
+  const availableDialogSlots = formCategory ? getAvailableSlots(formCategory) : [];
 
   // Check for password recovery hash on landing page
   useEffect(() => {
@@ -102,7 +99,7 @@ const Index = () => {
 
   const handleCategoryChange = (newCat: string) => {
     setFormCategory(newCat);
-    // Reset time — previous selection may not exist for the new category
+    // Reset time — slots differ per category (cross-service blocking)
     setRequestTime("");
     const catConfig = SERVICE_OPTIONS.find(c => c.id === newCat);
     if (catConfig && catConfig.subServices.length > 0) {
@@ -110,14 +107,7 @@ const Index = () => {
     } else {
       setFormService("");
     }
-    // Immediately warn if the selected date is blocked for the new category
-    if (isNonWorkingDay(selectedDate, nonWorkingDays, newCat)) {
-      toast({
-        title: "Датумот не е достапен",
-        description: "Избраната услуга не е достапна на овој датум. Ве молиме изберете друг датум или услуга.",
-        variant: "destructive",
-      });
-    }
+    // No toast needed — dialog only shows non-blocked categories
   };
 
   const handleSubmitRequest = async () => {
@@ -125,17 +115,9 @@ const Index = () => {
       toast({ title: "Грешка", description: "Ве молиме пополнете ги сите полиња", variant: "destructive" });
       return;
     }
-
-    // Guard: reject locally if the selected date/category is blocked.
-    // This mirrors the DB trigger and provides instant UX feedback.
-    if (isNonWorkingDay(selectedDate, nonWorkingDays, formCategory)) {
-      toast({
-        title: "Датумот не е достапен",
-        description: "Избраниот датум е недостапен за оваа услуга. Ве молиме изберете друг датум.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Note: no frontend blocked-date guard here — the UI only shows available
+    // categories and slots, so invalid selections are impossible.
+    // The DB trigger is the final hard guard if someone bypasses the UI.
 
     setIsSubmitting(true);
     try {
@@ -218,6 +200,7 @@ const Index = () => {
               <ServiceTabs
                 activeService={activeCategory}
                 onServiceChange={setActiveCategory}
+                unavailableCategories={Array.from(blockedCategories)}
               />
             </div>
           </div>
@@ -277,7 +260,7 @@ const Index = () => {
                   <Select value={formCategory} onValueChange={handleCategoryChange}>
                     <SelectTrigger><SelectValue placeholder="Изберете категорија..." /></SelectTrigger>
                     <SelectContent>
-                      {SERVICE_OPTIONS.map((cat) => (
+                      {SERVICE_OPTIONS.filter((cat) => !blockedCategories.has(cat.id as any)).map((cat) => (
                         <SelectItem key={cat.id} value={cat.id}>{cat.label}</SelectItem>
                       ))}
                     </SelectContent>
