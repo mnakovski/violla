@@ -102,11 +102,21 @@ const Index = () => {
 
   const handleCategoryChange = (newCat: string) => {
     setFormCategory(newCat);
+    // Reset time — previous selection may not exist for the new category
+    setRequestTime("");
     const catConfig = SERVICE_OPTIONS.find(c => c.id === newCat);
     if (catConfig && catConfig.subServices.length > 0) {
       setFormService(catConfig.subServices[0].id);
     } else {
       setFormService("");
+    }
+    // Immediately warn if the selected date is blocked for the new category
+    if (isNonWorkingDay(selectedDate, nonWorkingDays, newCat)) {
+      toast({
+        title: "Датумот не е достапен",
+        description: "Избраната услуга не е достапна на овој датум. Ве молиме изберете друг датум или услуга.",
+        variant: "destructive",
+      });
     }
   };
 

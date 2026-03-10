@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAppointments, Appointment } from "@/hooks/useAppointments";
-import { useNonWorkingDays } from "@/hooks/useNonWorkingDays";
+import { useNonWorkingDays, isNonWorkingDay } from "@/hooks/useNonWorkingDays";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,7 +32,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { format, parse } from "date-fns";
+import { format, parse, isSunday } from "date-fns";
 import { mk } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -732,6 +732,12 @@ const Admin = () => {
                           onSelect={(date) => date && setFormData({ ...formData, appointment_date: format(date, "yyyy-MM-dd") })}
                           locale={mk}
                           initialFocus
+                          modifiers={{
+                            closed: (date) => isSunday(date) || isNonWorkingDay(date, nonWorkingDays),
+                          }}
+                          modifiersClassNames={{
+                            closed: "line-through opacity-40 text-destructive",
+                          }}
                         />
                       </PopoverContent>
                     </Popover>
@@ -757,6 +763,16 @@ const Admin = () => {
                     </Select>
                   </div>
                 </div>
+
+                {/* Inline warning: category is blocked on the selected date. Admin can still save (manual override). */}
+                {formData.appointment_date && isNonWorkingDay(new Date(formData.appointment_date), nonWorkingDays, formData.service_type) && (
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs">
+                    <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span>
+                      Оваа категорија е блокирана на избраниот датум (неработен ден). Можете да закажете рачно, но клиентот нема да може да го направи тоа преку апликацијата.
+                    </span>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label>Траење</Label>
