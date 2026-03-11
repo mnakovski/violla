@@ -158,7 +158,7 @@ const Index = () => {
         `📅 Датум: ${format(selectedDate, "dd.MM.yyyy")}\n` +
         `⏰ Време: ${requestTime}\n\n` +
         `👇 Кликни за потврда:\n` +
-        `https://violla.mk/admin?request_id=${data.id}`;
+        `${window.location.origin}/admin?request_id=${data.id}`;
 
       try {
         const tgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
