@@ -148,7 +148,7 @@ const Index = () => {
         ? "8023276456:AAF6ojBjLCH1wJzMkaYV5E6FIZbIPlAtIYk"   // @ViollaBooking_Bot (production)
         : "8763144896:AAF_xkBI86E2kNbTuJDFUj9RlOVr1NVstZA";  // @Antigravity_Miki_bot (staging)
       const chatId = isProd
-        ? "-5270245125"        // Production group
+        ? "-1003653053955"        // Production group (migrated supergroup)
         : "-1003772746015";   // Violla_Staging supergroup
       const serviceIcon = formCategory === 'hair' ? '✂️' : formCategory === 'nails' ? '💅' : formCategory === 'makeup' ? '💄' : '✨';
       const serviceMk = formCategory === 'hair' ? 'Коса' : formCategory === 'nails' ? 'Нокти' : formCategory === 'makeup' ? 'Шминка' : 'Депилација';
