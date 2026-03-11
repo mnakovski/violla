@@ -141,9 +141,10 @@ const Index = () => {
       if (error) throw error;
 
       // 2. Client-Side Telegram Notification
-      const token = "8023276456:AAF6ojBjLCH1wJzMkaYV5E6FIZbIPlAtIYk";
-      // Supergroup chat IDs require the -100 prefix (Telegram migrated groups → supergroups)
-      const chatId = "-1005270245125";
+      // STAGING: uses @Antigravity_Miki_bot → "Violla_Staging" group
+      // PRODUCTION: swap token + chatId to the production bot/group
+      const token = "8763144896:AAF_xkBI86E2kNbTuJDFUj9RlOVr1NVstZA";
+      const chatId = "-5281321492"; // Violla_Staging group
       const serviceIcon = formCategory === 'hair' ? '✂️' : formCategory === 'nails' ? '💅' : formCategory === 'makeup' ? '💄' : '✨';
       const serviceMk = formCategory === 'hair' ? 'Коса' : formCategory === 'nails' ? 'Нокти' : formCategory === 'makeup' ? 'Шминка' : 'Депилација';
       const details = subConfig?.label || "";
