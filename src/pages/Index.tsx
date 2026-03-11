@@ -143,7 +143,7 @@ const Index = () => {
       // 2. Client-Side Telegram Notification
       // Credentials are selected automatically based on the current hostname —
       // no manual swapping needed when deploying to production.
-      const isProd = ['violla.mk', 'violla-one.vercel.app'].includes(window.location.hostname);
+      const isProd = window.location.hostname.includes('violla.mk') || window.location.hostname.includes('violla-one.vercel.app');
       const token = isProd
         ? "8023276456:AAF6ojBjLCH1wJzMkaYV5E6FIZbIPlAtIYk"   // @ViollaBooking_Bot (production)
         : "8763144896:AAF_xkBI86E2kNbTuJDFUj9RlOVr1NVstZA";  // @Antigravity_Miki_bot (staging)
