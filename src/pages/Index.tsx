@@ -135,6 +135,7 @@ const Index = () => {
         start_time: requestTime,
         duration_minutes: 30,
         notes: notes,
+        status: "pending", // Required: RLS WITH CHECK enforces status = 'pending' for anon
       }).select('id').single();
 
       if (error) throw error;

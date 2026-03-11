@@ -4,10 +4,13 @@ description: How to deploy changes to the production environment for Violla
 
 # Deploying to Production
 
-**WARNING: Ensure changes have been deployed to staging and explicitly approved by the user before proceeding.**
+> **⚠️ ALWAYS ask the user for explicit confirmation before ANY production step.**
+> Never run DB migrations on Production or push to `main` without the user saying "yes, deploy to prod" or equivalent.
+
+**Ensure changes have been deployed to staging and explicitly approved by the user before proceeding.**
 
 1. **Database Migrations (If applicable)**:
-   - If there are any schema changes, manually run the SQL scripts in the **Production** Supabase project's SQL Editor. This must be done BEFORE the Vercel deployment if it's a non-breaking or forward-compatible migration, or managed carefully if breaking.
+   - Ask the user to manually run the SQL scripts in the **Production** Supabase project's SQL Editor. Remind them to do this BEFORE the Vercel deployment.
 2. **Merge to Main**:
    - Merge the approved changes into the `main` branch locally.
 // turbo
