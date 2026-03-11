@@ -125,7 +125,7 @@ const Index = () => {
       const contactLabel = contactMethod === "viber" ? "Viber" : contactMethod === "whatsapp" ? "WhatsApp" : "SMS";
       const notes = `[${subConfig?.label || formCategory}] (Pref: ${contactLabel})`;
 
-      // 1. Insert Request — use .select('id') to get the generated ID via
+      // 1. Insert Request — use .select('id').single() to get the generated ID via
       // PostgREST RETURNING (does not require a SELECT RLS policy).
       const { data, error } = await supabase.from("appointment_requests").insert({
         customer_name: customerName,
@@ -140,14 +140,16 @@ const Index = () => {
 
       if (error) throw error;
 
-      // 2. Client-Side Notification (POST JSON - Plain Text)
+      // 2. Client-Side Telegram Notification
       const token = "8023276456:AAF6ojBjLCH1wJzMkaYV5E6FIZbIPlAtIYk";
-      const chatId = -5270245125;
+      // Supergroup chat IDs require the -100 prefix (Telegram migrated groups → supergroups)
+      const chatId = "-1005270245125";
       const serviceIcon = formCategory === 'hair' ? '✂️' : formCategory === 'nails' ? '💅' : formCategory === 'makeup' ? '💄' : '✨';
       const serviceMk = formCategory === 'hair' ? 'Коса' : formCategory === 'nails' ? 'Нокти' : formCategory === 'makeup' ? 'Шминка' : 'Депилација';
       const details = subConfig?.label || "";
 
-      const message = `🔔 НОВО БАРАЊЕ!\n\n` +
+      const message =
+        `🔔 НОВО БАРАЊЕ!\n\n` +
         `👤 Клиент: ${customerName}\n` +
         `📞 Тел: ${customerPhone}\n` +
         `💬 Контакт: ${contactLabel}\n` +
@@ -158,17 +160,17 @@ const Index = () => {
         `https://violla.mk/admin?request_id=${data.id}`;
 
       try {
-        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        const tgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text: message
-            // NO parse_mode
-          })
+          body: JSON.stringify({ chat_id: chatId, text: message }),
         });
+        if (!tgRes.ok) {
+          const errBody = await tgRes.json();
+          console.error("Telegram API error:", tgRes.status, JSON.stringify(errBody));
+        }
       } catch (e) {
-        console.error("Telegram notification failed (Client-side):", e);
+        console.error("Telegram notification failed (network):", e);
       }
 
       setIsSuccess(true);
@@ -186,6 +188,7 @@ const Index = () => {
       setIsSubmitting(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-background pb-32 pt-0">
