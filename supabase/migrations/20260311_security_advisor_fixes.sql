@@ -131,30 +131,45 @@ CREATE POLICY "Anon cannot mutate appointment_requests"
 
 -- ============================================================
 -- SECTION 3: Tighten the `customers` anon INSERT policy
--- Replace WITH CHECK (true) with an explicit (non-vacuous) check.
--- Anon must ONLY be able to INSERT — never SELECT / UPDATE / DELETE.
+-- Wrapped in a DO block — the customers table exists on Staging
+-- but NOT on Production (it was never created via migration there).
+-- The block is silently skipped when the table is absent.
 -- ============================================================
 
-DROP POLICY IF EXISTS "Anon users can submit customer details" ON public.customers;
-CREATE POLICY "Anon users can submit customer details"
-    ON public.customers
-    FOR INSERT
-    TO anon
-    -- customers columns confirmed: id, name, phone, email, notes, created_at
-    -- Require at least a phone or name so the row is not completely empty.
-    WITH CHECK (
-        (phone IS NOT NULL AND phone <> '')
-        OR (name IS NOT NULL AND name <> '')
-    );
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'customers'
+  ) THEN
 
--- Deny anon SELECT, UPDATE, DELETE on customers (explicit belt-and-suspenders)
-DROP POLICY IF EXISTS "Anon cannot read or mutate customers" ON public.customers;
-CREATE POLICY "Anon cannot read or mutate customers"
-    ON public.customers
-    FOR ALL          -- covers SELECT, UPDATE, DELETE
-    TO anon
-    USING (false)
-    WITH CHECK (false);
+    DROP POLICY IF EXISTS "Anon users can submit customer details" ON public.customers;
+    EXECUTE $p$
+      CREATE POLICY "Anon users can submit customer details"
+          ON public.customers
+          FOR INSERT
+          TO anon
+          -- customers columns confirmed: id, name, phone, email, notes, created_at
+          WITH CHECK (
+              (phone IS NOT NULL AND phone <> '')
+              OR (name IS NOT NULL AND name <> '')
+          )
+    $p$;
+
+    DROP POLICY IF EXISTS "Anon cannot read or mutate customers" ON public.customers;
+    EXECUTE $p$
+      CREATE POLICY "Anon cannot read or mutate customers"
+          ON public.customers
+          FOR ALL
+          TO anon
+          USING (false)
+          WITH CHECK (false)
+    $p$;
+
+  ELSE
+    RAISE NOTICE 'public.customers does not exist on this environment — skipping Section 3.';
+  END IF;
+END $$;
 
 
 -- ============================================================

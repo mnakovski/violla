@@ -141,10 +141,15 @@ const Index = () => {
       if (error) throw error;
 
       // 2. Client-Side Telegram Notification
-      // STAGING: uses @Antigravity_Miki_bot → "Violla_Staging" group
-      // PRODUCTION: swap token + chatId to the production bot/group
-      const token = "8763144896:AAF_xkBI86E2kNbTuJDFUj9RlOVr1NVstZA";
-      const chatId = "-1003772746015"; // Violla_Staging supergroup (migrated from group -5281321492)
+      // Credentials are selected automatically based on the current hostname —
+      // no manual swapping needed when deploying to production.
+      const isProd = window.location.hostname === 'violla.mk';
+      const token = isProd
+        ? "8023276456:AAF6ojBjLCH1wJzMkaYV5E6FIZbIPlAtIYk"   // @ViollaBooking_Bot (production)
+        : "8763144896:AAF_xkBI86E2kNbTuJDFUj9RlOVr1NVstZA";  // @Antigravity_Miki_bot (staging)
+      const chatId = isProd
+        ? "-5270245125"        // Production group
+        : "-1003772746015";   // Violla_Staging supergroup
       const serviceIcon = formCategory === 'hair' ? '✂️' : formCategory === 'nails' ? '💅' : formCategory === 'makeup' ? '💄' : '✨';
       const serviceMk = formCategory === 'hair' ? 'Коса' : formCategory === 'nails' ? 'Нокти' : formCategory === 'makeup' ? 'Шминка' : 'Депилација';
       const details = subConfig?.label || "";
