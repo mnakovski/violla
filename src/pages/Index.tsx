@@ -144,7 +144,7 @@ const Index = () => {
       // STAGING: uses @Antigravity_Miki_bot → "Violla_Staging" group
       // PRODUCTION: swap token + chatId to the production bot/group
       const token = "8763144896:AAF_xkBI86E2kNbTuJDFUj9RlOVr1NVstZA";
-      const chatId = "-5281321492"; // Violla_Staging group
+      const chatId = "-1003772746015"; // Violla_Staging supergroup (migrated from group -5281321492)
       const serviceIcon = formCategory === 'hair' ? '✂️' : formCategory === 'nails' ? '💅' : formCategory === 'makeup' ? '💄' : '✨';
       const serviceMk = formCategory === 'hair' ? 'Коса' : formCategory === 'nails' ? 'Нокти' : formCategory === 'makeup' ? 'Шминка' : 'Депилација';
       const details = subConfig?.label || "";
