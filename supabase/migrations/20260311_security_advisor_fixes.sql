@@ -394,3 +394,17 @@ GRANT EXECUTE ON FUNCTION public.check_slot_available(DATE, TIME, INTEGER, TEXT,
 --     AND cmd IN ('UPDATE', 'DELETE', 'ALL');
 --   Expected: 1 row — "Anon cannot mutate appointment_requests" with cmd = 'ALL'
 -- ============================================================
+
+
+-- ============================================================
+-- ADDENDUM (2026-03-11): Drop legacy permissive INSERT policy on appointment_requests
+-- ============================================================
+-- Production had an older policy named "Allow public insert requests" with
+-- WITH CHECK (true) that pre-dated this migration. It was not dropped by
+-- Section 2 above (which only dropped "Anon users can submit booking requests").
+-- The old permissive policy was OR-ing with our new restrictive one, effectively
+-- bypassing the status='pending' check.
+-- Applied manually on Production via SQL Editor on 2026-03-11. Safe to re-run
+-- on any environment (IF EXISTS makes it a no-op if already gone).
+-- ============================================================
+DROP POLICY IF EXISTS "Allow public insert requests" ON public.appointment_requests;
