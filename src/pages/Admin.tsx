@@ -765,7 +765,7 @@ const Admin = () => {
                 </div>
 
                 {/* Inline warning: category is blocked on the selected date. Admin can still save (manual override). */}
-                {formData.appointment_date && isNonWorkingDay(new Date(formData.appointment_date), nonWorkingDays, formData.service_type) && (
+                {formData.appointment_date && (isSunday(new Date(formData.appointment_date)) || isNonWorkingDay(new Date(formData.appointment_date), nonWorkingDays, formData.service_type)) && (
                   <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs">
                     <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                     <span>

@@ -416,7 +416,7 @@ const WeekCalendar = ({
               const nwdEntry = nonWorkingDays.find(
                 (nwd) => nwd.date === dayStr && nwd.type === "FULL_DAY"
               );
-              const isNonWorking = !!nwdEntry;
+              const isNonWorking = !!nwdEntry || isSunday(day);
               // CATEGORY entries only block specific services
               const categoryBlocks = nonWorkingDays.filter(
                 (nwd) => nwd.date === dayStr && nwd.type === "CATEGORY" && nwd.category_id
@@ -467,7 +467,7 @@ const WeekCalendar = ({
                     </span>
                     {isNonWorking && (
                       <span className="text-[9px] text-destructive/80 leading-none font-semibold text-center w-full px-1 truncate">
-                        {nwdEntry.reason || "Неработен"}
+                        {nwdEntry?.reason || "Неработен"}
                       </span>
                     )}
                     {!isNonWorking && categoryBlocks.length > 0 && (
@@ -489,12 +489,12 @@ const WeekCalendar = ({
                   <div
                     className={cn(
                       "relative border-r border-border",
-                      isNonWorking ? "cursor-default" : "cursor-pointer",
+                      isNonWorking && !isSunday(day) ? "cursor-default" : "cursor-pointer",
                       isTodayColumn && !isNonWorking && "bg-accent/5",
                       isNonWorking && "bg-destructive/5"
                     )}
                     style={{ height: HOURS.length * HOUR_HEIGHT }}
-                    onClick={(e) => !isNonWorking && handleSlotClick(day, e)}
+                    onClick={(e) => (!isNonWorking || isSunday(day)) && handleSlotClick(day, e)}
                   >
                     {/* Non-working day full overlay */}
                     {isNonWorking && (
@@ -507,7 +507,7 @@ const WeekCalendar = ({
                         <span className="text-xs font-semibold text-destructive text-center px-1">
                           Неработен ден
                         </span>
-                        {nwdEntry.reason && (
+                        {nwdEntry?.reason && (
                           <span className="text-[10px] text-destructive/70 text-center px-2 leading-tight">
                             {nwdEntry.reason}
                           </span>
