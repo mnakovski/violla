@@ -97,10 +97,10 @@ const WeekCalendar = ({
   );
   const [mobileViewDays, setMobileViewDays] = useState(1);
 
-  // Get Monday-Saturday (skip Sunday)
+  // Get Monday-Sunday (full week)
   const weekDays = useMemo(() => {
     const days = [];
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 7; i++) {
       days.push(addDays(currentWeekStart, i));
     }
     return days;
@@ -111,12 +111,10 @@ const WeekCalendar = ({
     // If mobile, start with Today
     const today = new Date();
     const dayOfWeek = today.getDay(); // 0 (Sun) to 6 (Sat)
-    // Convert to index: Mon=0, Tue=1, ... Sat=5, Sun=ignore/clamp
-    // Monday(1) -> 0
-    const index = dayOfWeek === 0 ? 5 : dayOfWeek - 1;
+    // Convert to index: Mon=0, Tue=1, ... Sat=5, Sun=6
+    const index = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     // Clamp to ensure we don't go out of bounds (max index depends on mobileViewDays, but safe to start at today)
-    // If it's Sunday (0), we show Saturday (5) or start of next week? Let's show Saturday for now.
-    return Math.max(0, Math.min(index, 5));
+    return Math.max(0, Math.min(index, 6));
   });
   const visibleDays = useMemo(() => {
     if (!isMobile) return weekDays;
@@ -128,14 +126,14 @@ const WeekCalendar = ({
       setMobileStartIndex(mobileStartIndex - mobileViewDays);
     } else if (isMobile && mobileStartIndex === 0) {
       setCurrentWeekStart(subWeeks(currentWeekStart, 1));
-      setMobileStartIndex(6 - mobileViewDays);
+      setMobileStartIndex(7 - mobileViewDays);
     } else {
       setCurrentWeekStart(subWeeks(currentWeekStart, 1));
     }
   };
 
   const goToNextWeek = () => {
-    if (isMobile && mobileStartIndex + mobileViewDays < 6) {
+    if (isMobile && mobileStartIndex + mobileViewDays < 7) {
       setMobileStartIndex(mobileStartIndex + mobileViewDays);
     } else if (isMobile) {
       setCurrentWeekStart(addWeeks(currentWeekStart, 1));
@@ -158,9 +156,9 @@ const WeekCalendar = ({
     setCurrentWeekStart(newWeekStart);
     if (isMobile) {
       const dayOfWeek = date.getDay();
-      // Monday = 1, so index = dayOfWeek - 1, but Sunday = 0 so cap at 5
-      const index = dayOfWeek === 0 ? 5 : dayOfWeek - 1;
-      setMobileStartIndex(Math.min(index, 6 - mobileViewDays));
+      // Monday = 1, so index = dayOfWeek - 1, Sunday = 0 so index = 6
+      const index = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      setMobileStartIndex(Math.min(index, 7 - mobileViewDays));
     }
     setIsCalendarOpen(false); // Close calendar after selection
   };
