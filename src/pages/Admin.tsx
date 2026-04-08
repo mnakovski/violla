@@ -113,6 +113,9 @@ const Admin = () => {
   const [isOverlapAlertOpen, setIsOverlapAlertOpen] = useState(false);
   const [showSuccessView, setShowSuccessView] = useState(false);
 
+  const [isApptDateOpen, setIsApptDateOpen] = useState(false);
+  const [isNwdDateOpen, setIsNwdDateOpen] = useState(false);
+
   // Non-Working Days hook
   const { nonWorkingDays, addNonWorkingDay, removeNonWorkingDay } = useNonWorkingDays();
   const [nwdFormData, setNwdFormData] = useState({
@@ -712,7 +715,7 @@ const Admin = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Датум</Label>
-                    <Popover>
+                    <Popover open={isApptDateOpen} onOpenChange={setIsApptDateOpen}>
                       <PopoverTrigger asChild>
                         <Button
                           variant={"outline"}
@@ -729,7 +732,12 @@ const Admin = () => {
                         <CalendarComponent
                           mode="single"
                           selected={formData.appointment_date ? new Date(formData.appointment_date) : undefined}
-                          onSelect={(date) => date && setFormData({ ...formData, appointment_date: format(date, "yyyy-MM-dd") })}
+                          onSelect={(date) => {
+                            if (date) {
+                              setFormData({ ...formData, appointment_date: format(date, "yyyy-MM-dd") });
+                              setIsApptDateOpen(false);
+                            }
+                          }}
                           locale={mk}
                           initialFocus
                           modifiers={{
@@ -933,7 +941,7 @@ const Admin = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Датум</Label>
-                  <Popover>
+                  <Popover open={isNwdDateOpen} onOpenChange={setIsNwdDateOpen}>
                     <PopoverTrigger asChild>
                       <Button
                         variant={"outline"}
@@ -950,7 +958,12 @@ const Admin = () => {
                       <CalendarComponent
                         mode="single"
                         selected={nwdFormData.date ? new Date(nwdFormData.date) : undefined}
-                        onSelect={(date) => date && setNwdFormData({ ...nwdFormData, date: format(date, "yyyy-MM-dd") })}
+                        onSelect={(date) => {
+                          if (date) {
+                            setNwdFormData({ ...nwdFormData, date: format(date, "yyyy-MM-dd") });
+                            setIsNwdDateOpen(false);
+                          }
+                        }}
                         locale={mk}
                         initialFocus
                       />

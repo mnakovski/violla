@@ -1,5 +1,5 @@
 import { useAppointments, getOccupiedSlotsForCustomer } from "@/hooks/useAppointments";
-import { generateTimeSlotsForDate, getWorkingHours } from "@/utils/workingHours";
+import { generateTimeSlotsForDate30, generateNailsSlots, getWorkingHours } from "@/utils/workingHours";
 import { useNonWorkingDays, isNonWorkingDay } from "@/hooks/useNonWorkingDays";
 
 interface TimeSlotsProps {
@@ -50,7 +50,9 @@ const TimeSlots = ({ selectedDate, activeService, onSlotSelect }: TimeSlotsProps
     );
   }
 
-  const timeSlots = generateTimeSlotsForDate(selectedDate, nonWorkingDays);
+  const timeSlots = activeService === "nails"
+    ? generateNailsSlots(selectedDate, nonWorkingDays)
+    : generateTimeSlotsForDate30(selectedDate, nonWorkingDays);
   // Customer-facing: nails/waxing/makeup block each other's slots.
   const occupiedSlots = getOccupiedSlotsForCustomer(appointments, selectedDate, activeService);
 

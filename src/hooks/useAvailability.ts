@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useAppointments, getOccupiedSlotsForCustomer, SHARED_SLOT_SERVICES } from "@/hooks/useAppointments";
 import { useNonWorkingDays, isNonWorkingDay } from "@/hooks/useNonWorkingDays";
-import { generateTimeSlotsForDate } from "@/utils/workingHours";
+import { generateTimeSlotsForDate30, generateNailsSlots } from "@/utils/workingHours";
 
 const ALL_CATEGORIES = ["hair", "nails", "waxing", "makeup"] as const;
 
@@ -22,9 +22,16 @@ export const useAvailability = (date: Date) => {
 
   const loading = nwdLoading || aptsLoading;
 
-  // All working-hour slots for the day (empty if salon closed / FULL_DAY blocked).
+  // All working-hour slots for the day using 30-min intervals (client-facing).
+  // NOTE: workingSlots here is used only for non-nails categories.
+  // Nails gets its own generator with the Mon/Wed/Fri 18:30 cap.
   const workingSlots = useMemo(
-    () => generateTimeSlotsForDate(date, nonWorkingDays),
+    () => generateTimeSlotsForDate30(date, nonWorkingDays),
+    [date, nonWorkingDays]
+  );
+
+  const nailsWorkingSlots = useMemo(
+    () => generateNailsSlots(date, nonWorkingDays),
     [date, nonWorkingDays]
   );
 
@@ -35,16 +42,18 @@ export const useAvailability = (date: Date) => {
   const slotsByCategory = useMemo(() => {
     const map: Record<string, string[]> = {};
     for (const cat of ALL_CATEGORIES) {
+      // Pick the correct base slot list per category
+      const baseSlots = cat === "nails" ? nailsWorkingSlots : workingSlots;
       // If the entire salon is closed OR this specific category is blocked → no slots
-      if (isNonWorkingDay(date, nonWorkingDays, cat) || workingSlots.length === 0) {
+      if (isNonWorkingDay(date, nonWorkingDays, cat) || baseSlots.length === 0) {
         map[cat] = [];
         continue;
       }
       const occupied = getOccupiedSlotsForCustomer(appointments, date, cat);
-      map[cat] = workingSlots.filter((t) => !occupied.has(t));
+      map[cat] = baseSlots.filter((t) => !occupied.has(t));
     }
     return map;
-  }, [date, nonWorkingDays, appointments, workingSlots]);
+  }, [date, nonWorkingDays, appointments, workingSlots, nailsWorkingSlots]);
 
   /** Categories with zero bookable slots (blocked day or fully booked). */
   const blockedCategories = useMemo(

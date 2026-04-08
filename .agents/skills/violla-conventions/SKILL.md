@@ -35,3 +35,25 @@ description: Core architecture, tech stack, and ways of working for the Violla p
    - `main` branch pushes automatically deploy to production (`violla.mk` and `violla-one.vercel.app`).
    - ALWAYS deploy to staging first. Push to `staging`, wait for the user to test and approve, and ONLY THEN deploy to `main`.
    - Never push directly to `main` without user sign-off.
+
+## Booking Flow Rules
+
+### Time Slot Intervals
+- **Client-facing UI** (TimeSlots.tsx, useAvailability.ts): Shows **30-minute intervals only** (e.g. 09:00, 09:30, 10:00…).
+  - Uses `generateTimeSlotsForDate30()` from `src/utils/workingHours.ts`.
+- **Admin panel** (Admin.tsx dialog, WeekCalendar.tsx positioning): Retains **15-minute precision**.
+  - Uses the original `generateTimeSlotsForDate()` and `generateTimeOptions()`.
+
+### Nails Category Slot Restriction
+- Applies **only to the "Nails" (Нокти) category**, **only on client-facing UI**.
+- On **Monday, Wednesday, Friday** (second-shift days: 13:00–20:00): the last available slot is **18:30**. Slots 19:00 and 19:30 are hidden.
+- On all other days (Tue, Thu, Sat): Nails shows full 30-min slots up to the working day end.
+- Implemented via `generateNailsSlots()` in `src/utils/workingHours.ts`.
+- Does **NOT** affect admin scheduling — admin can still book any time manually.
+
+### Date Picker Behavior
+- All date pickers close automatically when a date is selected.
+- **Client DatePicker** (`src/components/DatePicker.tsx`): controlled via `open`/`setOpen(false)` in `handleSelect`.
+- **Admin WeekCalendar** (`src/components/admin/WeekCalendar.tsx`): controlled via `isCalendarOpen`/`setIsCalendarOpen(false)` in `jumpToDate`.
+- **Admin Appointment Date Picker** (`src/pages/Admin.tsx`): controlled via `isApptDateOpen`/`setIsApptDateOpen(false)`.
+- **Admin Non-Working Day Date Picker** (`src/pages/Admin.tsx`): controlled via `isNwdDateOpen`/`setIsNwdDateOpen(false)`.
