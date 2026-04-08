@@ -20,7 +20,8 @@ description: Core architecture, tech stack, and ways of working for the Violla p
 - **Mobile-First**: The application is designed to be mobile-first and fully responsive, serving as a Hair Salon Appointment System.
 - **Dynamic Branding**: The UI theme and branding dynamically adjust based on uploaded images.
 - **Core Entities**: Focuses on managing services (with category and duration), appointments, calendar views, and conflicting working hours.
-- **Admin Dashboard**: Contains functionalities for managing appointments, working hours, non-working days (including category-specific unavailability), and branding.
+- **Admin Dashboard**: Contains functionalities for managing appointments, working hours, non-working days (including category-specific unavailability), branding, and a **Notes** section.
+  - *Notes*: A dedicated tab within the Admin panel using Supabase (`notes` table). Enables admins to store private business notes with title, description, and optional dates.
 
 ## Ways of Working & Deployment Rules
 1. **Local Development**: Use `npm run dev` to start the local Vite server (not `npm run server`).

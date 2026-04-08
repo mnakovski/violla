@@ -53,6 +53,8 @@ import viollaLogo from "@/assets/new-logo.jpg";
 import { SERVICE_OPTIONS } from "@/constants/services";
 import WeekCalendar from "@/components/admin/WeekCalendar";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import NotesSection from "@/components/admin/NotesSection";
 
 const serviceLabels: Record<string, string> = {
   hair: "Коса",
@@ -558,34 +560,47 @@ const Admin = () => {
       </header>
 
       <main className="max-w-6xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
-        <div className="flex justify-between items-center mb-4 sm:mb-6">
-          <h2 className="text-xl font-semibold text-foreground">Термини</h2>
-          <div className="flex gap-2">
-            <Button
-              onClick={() => setIsNonWorkingDaysDialogOpen(true)}
-              variant="outline"
-              className="shadow-sm"
-            >
-              <Calendar className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Неработни денови</span>
-              <span className="sm:hidden">Слободни</span>
-            </Button>
-            <Button
-              onClick={() => handleOpenDialog()}
-              className="bg-accent hover:bg-accent/90 shadow-md"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Додај термин</span>
-              <span className="sm:hidden">Додај</span>
-            </Button>
-          </div>
-        </div>
-        <WeekCalendar
-          appointments={appointments}
-          nonWorkingDays={nonWorkingDays}
-          onSlotClick={handleSlotClick}
-          onAppointmentClick={handleOpenDialog}
-        />
+        <Tabs defaultValue="appointments" className="w-full">
+          <TabsList className="mb-6 grid w-full max-w-md grid-cols-2 mx-auto sm:mx-0">
+            <TabsTrigger value="appointments">Термини</TabsTrigger>
+            <TabsTrigger value="notes">Белешки</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="appointments" className="space-y-4 outline-none">
+            <div className="flex justify-between items-center mb-4 sm:mb-6">
+              <h2 className="text-xl font-semibold text-foreground">Термини</h2>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setIsNonWorkingDaysDialogOpen(true)}
+                  variant="outline"
+                  className="shadow-sm"
+                >
+                  <Calendar className="w-4 h-4 mr-2" />
+                  <span className="hidden sm:inline">Неработни денови</span>
+                  <span className="sm:hidden">Слободни</span>
+                </Button>
+                <Button
+                  onClick={() => handleOpenDialog()}
+                  className="bg-accent hover:bg-accent/90 shadow-md"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  <span className="hidden sm:inline">Додај термин</span>
+                  <span className="sm:hidden">Додај</span>
+                </Button>
+              </div>
+            </div>
+            <WeekCalendar
+              appointments={appointments}
+              nonWorkingDays={nonWorkingDays}
+              onSlotClick={handleSlotClick}
+              onAppointmentClick={handleOpenDialog}
+            />
+          </TabsContent>
+
+          <TabsContent value="notes" className="outline-none">
+            <NotesSection />
+          </TabsContent>
+        </Tabs>
       </main>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
