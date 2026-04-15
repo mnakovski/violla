@@ -72,15 +72,15 @@ const serviceColors: Record<string, { bg: string; border: string; text: string }
   },
 };
 
-// Generate time slots from 08:00 to 20:00 (15 min intervals for positioning)
-const TIME_SLOTS = Array.from({ length: 49 }, (_, i) => {
-  const hour = Math.floor(i / 4) + 8;
+// Generate time slots from 07:00 to 23:00 (15 min intervals for positioning)
+const TIME_SLOTS = Array.from({ length: 65 }, (_, i) => {
+  const hour = Math.floor(i / 4) + 7;
   const minute = (i % 4) * 15;
   return `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
 });
 
 // Display hours only for the sidebar
-const HOURS = Array.from({ length: 13 }, (_, i) => i + 8);
+const HOURS = Array.from({ length: 17 }, (_, i) => i + 7);
 
 const SLOT_HEIGHT = 16; // pixels per 15 min slot
 const HOUR_HEIGHT = SLOT_HEIGHT * 4; // 64px per hour
@@ -172,7 +172,7 @@ const WeekCalendar = ({
   // Calculate position and height for an appointment
   const getAppointmentGeometry = (apt: Appointment) => {
     const [hours, minutes] = apt.start_time.split(":").map(Number);
-    const startMinutes = (hours - 8) * 60 + minutes;
+    const startMinutes = (hours - 7) * 60 + minutes;
     const endMinutes = startMinutes + apt.duration_minutes;
     const top = (startMinutes / 15) * SLOT_HEIGHT;
     const height = (apt.duration_minutes / 15) * SLOT_HEIGHT;
@@ -264,9 +264,9 @@ const WeekCalendar = ({
     const now = new Date();
     const hours = now.getHours();
     const minutes = now.getMinutes();
-    if (hours < 8 || hours >= 20) return null;
-    const minutesSince8 = (hours - 8) * 60 + minutes;
-    return (minutesSince8 / 15) * SLOT_HEIGHT;
+    if (hours < 7 || hours >= 23) return null;
+    const minutesSince7 = (hours - 7) * 60 + minutes;
+    return (minutesSince7 / 15) * SLOT_HEIGHT;
   };
 
   const currentTimePosition = getCurrentTimePosition();
@@ -519,7 +519,7 @@ const WeekCalendar = ({
                       <div
                         key={hour}
                         className="absolute w-full border-b border-border/30"
-                        style={{ top: (hour - 8) * HOUR_HEIGHT, height: HOUR_HEIGHT }}
+                        style={{ top: (hour - 7) * HOUR_HEIGHT, height: HOUR_HEIGHT }}
                       />
                     ))}
 

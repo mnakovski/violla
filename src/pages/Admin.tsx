@@ -75,10 +75,10 @@ const durationOptions = [
 
 const generateTimeOptions = () => {
   const options = [];
-  for (let hour = 8; hour <= 20; hour++) {
+  for (let hour = 7; hour <= 23; hour++) {
     const hourStr = hour.toString().padStart(2, "0");
     options.push(`${hourStr}:00`);
-    if (hour < 20) {
+    if (hour < 23) {
       options.push(`${hourStr}:15`);
       options.push(`${hourStr}:30`);
       options.push(`${hourStr}:45`);
