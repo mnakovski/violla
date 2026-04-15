@@ -21,8 +21,7 @@ description: Core architecture, tech stack, and ways of working for the Violla p
 - **Dynamic Branding**: The UI theme and branding dynamically adjust based on uploaded images.
 - **Core Entities**: Focuses on managing services (with category and duration), appointments, calendar views, and conflicting working hours.
 - **Admin Dashboard**: Contains functionalities for managing appointments, working hours, non-working days (including category-specific unavailability), branding, and a **Notes** section.
-  - *Notes*: A dedicated tab within the Admin panel using Supabase (`notes` table). Enables admins to store private business notes with title, description, and optional dates.
-
+  - *Notes*: A dedicated tab within the Admin panel using Supabase (`notes` table). Enables admins to store private business notes with title, description, and optional dates. Notes are private by default (`user_id` driven) but support an `is_shared` flag allowing visibility across multiple admin accounts. Robust Row Level Security (RLS) policies are essential to enforce this isolation.
 ## Ways of Working & Deployment Rules
 1. **Local Development**: Use `npm run dev` to start the local Vite server (not `npm run server`).
 2. **Environment Strategy**: There are strictly separate environments for **staging** and **production**.
