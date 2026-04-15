@@ -41,8 +41,8 @@ description: Core architecture, tech stack, and ways of working for the Violla p
 ### Time Slot Intervals
 - **Client-facing UI** (TimeSlots.tsx, useAvailability.ts): Shows **30-minute intervals only** (e.g. 09:00, 09:30, 10:00…).
   - Uses `generateTimeSlotsForDate30()` from `src/utils/workingHours.ts`.
-- **Admin panel** (Admin.tsx dialog, WeekCalendar.tsx positioning): Retains **15-minute precision**.
-  - Uses the original `generateTimeSlotsForDate()` and `generateTimeOptions()`.
+- **Admin panel** (Admin.tsx dialog, WeekCalendar.tsx positioning): Retains **15-minute precision** and supports expanded time limits from **07:00 AM to 23:00 PM**.
+  - Uses custom internal `generateTimeOptions()` rather than the old default and has **no impact on frontend availability**.
 
 ### Nails Category Slot Restriction
 - Applies **only to the "Nails" (Нокти) category**, **only on client-facing UI**.
