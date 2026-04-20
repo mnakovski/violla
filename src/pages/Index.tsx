@@ -140,46 +140,38 @@ const Index = () => {
 
       if (error) throw error;
 
-      // 2. Client-Side Telegram Notification
-      // Credentials are selected automatically based on the current hostname —
-      // no manual swapping needed when deploying to production.
-      const isProd = window.location.hostname.includes('violla.mk') || window.location.hostname.includes('violla-one.vercel.app');
-      const token = isProd
-        ? import.meta.env.VITE_TELEGRAM_BOT_TOKEN_PROD
-        : import.meta.env.VITE_TELEGRAM_BOT_TOKEN_STAGING;
-      const chatId = isProd
-        ? import.meta.env.VITE_TELEGRAM_CHAT_ID_PROD
-        : import.meta.env.VITE_TELEGRAM_CHAT_ID_STAGING;
-      if (!token || !chatId) {
-        console.error("Missing Telegram env vars");
-      }
-      const serviceIcon = formCategory === 'hair' ? '✂️' : formCategory === 'nails' ? '💅' : formCategory === 'makeup' ? '💄' : '✨';
+      // 2. Server-side Telegram notification via Supabase Edge Function
       const serviceMk = formCategory === 'hair' ? 'Коса' : formCategory === 'nails' ? 'Нокти' : formCategory === 'makeup' ? 'Шминка' : 'Депилација';
       const details = subConfig?.label || "";
 
-      const message =
-        `🔔 НОВО БАРАЊЕ!\n\n` +
-        `👤 Клиент: ${customerName}\n` +
-        `📞 Тел: ${customerPhone}\n` +
-        `💬 Контакт: ${contactLabel}\n` +
-        `${serviceIcon} Услуга: ${serviceMk} ${details}\n` +
-        `📅 Датум: ${format(selectedDate, "dd.MM.yyyy")}\n` +
-        `⏰ Време: ${requestTime}\n\n` +
-        `👇 Кликни за потврда:\n` +
-        `${window.location.origin}/admin?request_id=${data.id}`;
-
       try {
-        const tgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: chatId, text: message }),
+        const fnUrl = "https://suffvdkcwwpdacrxnccm.supabase.co/functions/v1/send-telegram-booking";
+
+        const tgRes = await fetch(fnUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            customerName,
+            customerPhone,
+            contactLabel,
+            serviceMk,
+            details,
+            appointmentDate: format(selectedDate, "dd.MM.yyyy"),
+            requestTime,
+            requestId: data.id,
+            origin: window.location.origin,
+          }),
         });
+
+        const tgJson = await tgRes.json();
+
         if (!tgRes.ok) {
-          const errBody = await tgRes.json();
-          console.error("Telegram API error:", tgRes.status, JSON.stringify(errBody));
+          console.error("Telegram function error:", tgRes.status, tgJson);
         }
       } catch (e) {
-        console.error("Telegram notification failed (network):", e);
+        console.error("Telegram function network error:", e);
       }
 
       setIsSuccess(true);
