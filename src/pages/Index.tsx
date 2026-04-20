@@ -145,11 +145,14 @@ const Index = () => {
       // no manual swapping needed when deploying to production.
       const isProd = window.location.hostname.includes('violla.mk') || window.location.hostname.includes('violla-one.vercel.app');
       const token = isProd
-        ? "8023276456:AAF6ojBjLCH1wJzMkaYV5E6FIZbIPlAtIYk"   // @ViollaBooking_Bot (production)
-        : "8763144896:AAF_xkBI86E2kNbTuJDFUj9RlOVr1NVstZA";  // @Antigravity_Miki_bot (staging)
+        ? import.meta.env.VITE_TELEGRAM_BOT_TOKEN_PROD
+        : import.meta.env.VITE_TELEGRAM_BOT_TOKEN_STAGING;
       const chatId = isProd
-        ? "-1003653053955"        // Production group (migrated supergroup)
-        : "-1003772746015";   // Violla_Staging supergroup
+        ? import.meta.env.VITE_TELEGRAM_CHAT_ID_PROD
+        : import.meta.env.VITE_TELEGRAM_CHAT_ID_STAGING;
+      if (!token || !chatId) {
+        console.error("Missing Telegram env vars");
+      }
       const serviceIcon = formCategory === 'hair' ? '✂️' : formCategory === 'nails' ? '💅' : formCategory === 'makeup' ? '💄' : '✨';
       const serviceMk = formCategory === 'hair' ? 'Коса' : formCategory === 'nails' ? 'Нокти' : formCategory === 'makeup' ? 'Шминка' : 'Депилација';
       const details = subConfig?.label || "";
