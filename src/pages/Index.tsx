@@ -169,9 +169,11 @@ const Index = () => {
 
         if (!tgRes.ok) {
           console.error("Telegram function error:", tgRes.status, tgJson);
+          throw new Error("Не успеа испраќањето на барањето. Обидете се повторно.");
         }
       } catch (e) {
         console.error("Telegram function network error:", e);
+        throw new Error("Не успеа испраќањето на барањето. Обидете се повторно.");
       }
 
       setIsSuccess(true);
