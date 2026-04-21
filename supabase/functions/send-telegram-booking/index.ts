@@ -50,16 +50,17 @@ const formatTelegramMessage = (payload: BookingPayload) => {
 };
 
 const sendAlertEmail = async (subject: string, html: string) => {
-  const apiKey = Deno.env.get("RESEND_API_KEY");
+  const apiKey = Deno.env.get("AGENTMAIL_API_KEY");
+  const inboxId = Deno.env.get("AGENTMAIL_INBOX_ID");
   const from = Deno.env.get("ALERT_EMAIL_FROM");
   const to = Deno.env.get("ALERT_EMAIL_TO");
 
-  if (!apiKey || !from || !to) {
-    console.error("Email alert skipped, missing RESEND_API_KEY / ALERT_EMAIL_FROM / ALERT_EMAIL_TO");
+  if (!apiKey || !inboxId || !from || !to) {
+    console.error("Email alert skipped, missing AGENTMAIL_API_KEY / AGENTMAIL_INBOX_ID / ALERT_EMAIL_FROM / ALERT_EMAIL_TO");
     return;
   }
 
-  const response = await fetch("https://api.resend.com/emails", {
+  const response = await fetch(`https://api.agentmail.to/inboxes/${inboxId}/messages/send`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -67,9 +68,10 @@ const sendAlertEmail = async (subject: string, html: string) => {
     },
     body: JSON.stringify({
       from,
-      to: [to],
+      to,
       subject,
       html,
+      text: html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
     }),
   });
 
