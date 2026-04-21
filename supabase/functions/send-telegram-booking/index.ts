@@ -107,6 +107,20 @@ Deno.serve(async (req) => {
   try {
     payload = await req.json();
 
+    if (payload.customerName?.toLowerCase().includes("mail only test")) {
+      await sendAlertEmail(
+        "[Violla Staging] direct email alert test",
+        emailHtml({ payload, errorMessage: "Direct staging email test" }),
+      );
+      return new Response(JSON.stringify({ ok: false, error: "Direct staging email test" }), {
+        status: 500,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
+      });
+    }
+
     if (payload.customerName?.toLowerCase().includes("fail email test")) {
       throw new Error("Intentional staging failure for email alert test");
     }
