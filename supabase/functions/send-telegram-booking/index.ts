@@ -134,6 +134,20 @@ Deno.serve(async (req) => {
   try {
     payload = await req.json();
 
+    if (payload.customerName?.toLowerCase().includes("mail_test")) {
+      await sendAlertEmail(
+        "[Violla Prod] direct email alert test",
+        emailHtml({ payload, errorMessage: "Direct production email test" }),
+      );
+      return new Response(JSON.stringify({ ok: false, error: "Direct production email test" }), {
+        status: 500,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
+      });
+    }
+
     const botToken = requiredEnv("TELEGRAM_BOT_TOKEN");
     const chatId = requiredEnv("TELEGRAM_CHAT_ID");
     const telegramMessage = formatTelegramMessage(payload);
