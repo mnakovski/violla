@@ -87,6 +87,8 @@ const sendAlertEmail = async (subject: string, html: string) => {
   console.error("Alert email sent", resultText);
 };
 
+const environmentLabel = Deno.env.get("ENVIRONMENT_LABEL") || "Violla";
+
 const emailHtml = ({ payload, errorMessage, stack }: { payload: BookingPayload; errorMessage: string; stack?: string }) => {
   const rows = [
     ["Клиент", payload.customerName || "-"],
@@ -110,7 +112,7 @@ const emailHtml = ({ payload, errorMessage, stack }: { payload: BookingPayload; 
 
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111827;max-width:720px;">
-      <h2 style="margin:0 0 16px;">Violla staging error</h2>
+      <h2 style="margin:0 0 16px;">${escapeHtml(environmentLabel)} error</h2>
       <p style="margin:0 0 8px;"><strong>Function:</strong> send-telegram-booking</p>
       <p style="margin:0 0 8px;"><strong>Time:</strong> ${escapeHtml(new Date().toISOString())}</p>
       <p style="margin:0 0 16px;"><strong>Error:</strong> ${escapeHtml(errorMessage)}</p>
@@ -133,20 +135,6 @@ Deno.serve(async (req) => {
 
   try {
     payload = await req.json();
-
-    if (payload.customerName?.toLowerCase().includes("mail_test")) {
-      await sendAlertEmail(
-        "[Violla Prod] direct email alert test",
-        emailHtml({ payload, errorMessage: "Direct production email test" }),
-      );
-      return new Response(JSON.stringify({ ok: false, error: "Direct production email test" }), {
-        status: 500,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json",
-        },
-      });
-    }
 
     const botToken = requiredEnv("TELEGRAM_BOT_TOKEN");
     const chatId = requiredEnv("TELEGRAM_CHAT_ID");
