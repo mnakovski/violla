@@ -82,7 +82,11 @@ const sendAlertEmail = async (subject: string, html: string) => {
   if (!response.ok) {
     const text = await response.text();
     console.error("Failed to send alert email", response.status, text);
+    return;
   }
+
+  const resultText = await response.text();
+  console.error("Alert email sent", resultText);
 };
 
 const emailHtml = ({ payload, errorMessage, stack }: { payload: BookingPayload; errorMessage: string; stack?: string }) => `
@@ -127,12 +131,7 @@ Deno.serve(async (req) => {
     const telegramJson = await telegramRes.json();
 
     if (!telegramRes.ok || !telegramJson?.ok) {
-      const err = new Error(`Telegram API error: ${telegramRes.status} ${JSON.stringify(telegramJson)}`);
-      await sendAlertEmail(
-        "[Violla Staging] send-telegram-booking failed",
-        emailHtml({ payload, errorMessage: err.message, stack: err.stack }),
-      );
-      throw err;
+      throw new Error(`Telegram API error: ${telegramRes.status} ${JSON.stringify(telegramJson)}`);
     }
 
     return new Response(JSON.stringify({ ok: true, result: telegramJson.result }), {
