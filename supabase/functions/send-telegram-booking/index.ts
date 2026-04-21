@@ -87,13 +87,42 @@ const sendAlertEmail = async (subject: string, html: string) => {
   console.error("Alert email sent", resultText);
 };
 
-const emailHtml = ({ payload, errorMessage, stack }: { payload: BookingPayload; errorMessage: string; stack?: string }) => `
-  <h2>Violla staging error: send-telegram-booking</h2>
-  <p><strong>Time:</strong> ${new Date().toISOString()}</p>
-  <p><strong>Error:</strong> ${escapeHtml(errorMessage)}</p>
-  <p><strong>Stack:</strong><br/><pre>${escapeHtml(stack || "n/a")}</pre></p>
-  <p><strong>Payload:</strong><br/><pre>${escapeHtml(JSON.stringify(payload, null, 2))}</pre></p>
-`;
+const emailHtml = ({ payload, errorMessage, stack }: { payload: BookingPayload; errorMessage: string; stack?: string }) => {
+  const rows = [
+    ["Клиент", payload.customerName || "-"],
+    ["Телефон", payload.customerPhone || "-"],
+    ["Контакт", payload.contactLabel || "-"],
+    ["Услуга", payload.serviceMk || "-"],
+    ["Детали", payload.details || "-"],
+    ["Датум", payload.appointmentDate || "-"],
+    ["Време", payload.requestTime || "-"],
+    ["Request ID", payload.requestId ? String(payload.requestId) : "-"],
+    ["Origin", payload.origin || "-"],
+  ];
+
+  const rowsHtml = rows
+    .map(([label, value]) => `
+      <tr>
+        <td style="padding:8px 12px;border:1px solid #e5e7eb;background:#f8fafc;font-weight:600;white-space:nowrap;">${escapeHtml(label)}</td>
+        <td style="padding:8px 12px;border:1px solid #e5e7eb;">${escapeHtml(value)}</td>
+      </tr>`)
+    .join("");
+
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111827;max-width:720px;">
+      <h2 style="margin:0 0 16px;">Violla staging error</h2>
+      <p style="margin:0 0 8px;"><strong>Function:</strong> send-telegram-booking</p>
+      <p style="margin:0 0 8px;"><strong>Time:</strong> ${escapeHtml(new Date().toISOString())}</p>
+      <p style="margin:0 0 16px;"><strong>Error:</strong> ${escapeHtml(errorMessage)}</p>
+
+      <h3 style="margin:24px 0 10px;">Request details</h3>
+      <table style="border-collapse:collapse;width:100%;font-size:14px;">${rowsHtml}</table>
+
+      <h3 style="margin:24px 0 10px;">Stack</h3>
+      <pre style="white-space:pre-wrap;word-break:break-word;background:#f8fafc;border:1px solid #e5e7eb;padding:12px;border-radius:8px;">${escapeHtml(stack || "n/a")}</pre>
+    </div>
+  `;
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -104,24 +133,6 @@ Deno.serve(async (req) => {
 
   try {
     payload = await req.json();
-
-    if (payload.customerName?.toLowerCase().includes("mail only test")) {
-      await sendAlertEmail(
-        "[Violla Staging] direct email alert test",
-        emailHtml({ payload, errorMessage: "Direct staging email test" }),
-      );
-      return new Response(JSON.stringify({ ok: false, error: "Direct staging email test" }), {
-        status: 500,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json",
-        },
-      });
-    }
-
-    if (payload.customerName?.toLowerCase().includes("fail email test")) {
-      throw new Error("Intentional staging failure for email alert test");
-    }
 
     const botToken = requiredEnv("TELEGRAM_BOT_TOKEN");
     const chatId = requiredEnv("TELEGRAM_CHAT_ID");
