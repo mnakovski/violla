@@ -24,17 +24,32 @@ description: Core architecture, tech stack, and ways of working for the Violla p
   - *Notes*: A dedicated tab within the Admin panel using Supabase (`notes` table). Enables admins to store private business notes with title, description, and optional dates. Notes are private by default (`user_id` driven) but support an `is_shared` flag allowing visibility across multiple admin accounts. Robust Row Level Security (RLS) policies are essential to enforce this isolation.
 ## Ways of Working & Deployment Rules
 1. **Local Development**: Use `npm run dev` to start the local Vite server (not `npm run server`).
-2. **Environment Strategy**: There are strictly separate environments for **staging** and **production**.
+2. **Environment Strategy**: There are strictly separate environments for **staging** and **production** across both Vercel and Supabase.
 3. **Database Migrations**: 
    - Supabase has separate databases for staging and production.
    - Any SQL migration must be run **manually** via the Supabase SQL Editor in BOTH projects.
    - Always run the migration on staging first, before the staging deployment. 
    - After staging is approved by the user, run the migration on production before the production deployment.
 4. **Vercel Deployments**:
-   - `staging` branch pushes automatically deploy to a permanent preview URL: `https://violla-git-staging-mikis-projects-07c0ec41.vercel.app`.
+   - The permanent staging URL is `https://violla-git-staging-mikis-projects-07c0ec41.vercel.app`.
+   - A fresh preview can be deployed with `vercel --target preview`, then repointed with `vercel alias set <preview-url> violla-git-staging-mikis-projects-07c0ec41.vercel.app` when needed.
    - `main` branch pushes automatically deploy to production (`violla.mk` and `violla-one.vercel.app`).
-   - ALWAYS deploy to staging first. Push to `staging`, wait for the user to test and approve, and ONLY THEN deploy to `main`.
+   - ALWAYS deploy to staging first, wait for the user to test and approve, and ONLY THEN deploy to production.
    - Never push directly to `main` without user sign-off.
+5. **Supabase Edge Functions**:
+   - Booking Telegram notifications live in `supabase/functions/send-telegram-booking/index.ts`.
+   - This function must be deployed separately from Vercel. A frontend deploy alone does not update it.
+   - For public booking flow, deploy it with `--no-verify-jwt`.
+   - Staging deploy: `supabase functions deploy send-telegram-booking --project-ref qdyqmvwvadrdlbdowfsg --no-verify-jwt`
+   - Production deploy: `supabase functions deploy send-telegram-booking --project-ref suffvdkcwwpdacrxnccm --no-verify-jwt`
+6. **Frontend → Supabase Function URL rule**:
+   - Never hardcode the production Supabase function URL in the frontend.
+   - `src/pages/Index.tsx` must build the function URL from `import.meta.env.VITE_SUPABASE_URL`, so staging points to staging Supabase and production points to production Supabase.
+7. **Error Alert Emails**:
+   - `send-telegram-booking` sends error alerts through AgentMail.
+   - Required Supabase secrets per environment: `AGENTMAIL_API_KEY`, `AGENTMAIL_INBOX_ID`, `ALERT_EMAIL_TO`, `ENVIRONMENT_LABEL`.
+   - Keep `ALERT_EMAIL_FROM` as the inbox email address if it is needed again later, but the current stable AgentMail payload works without explicitly sending `from` in the request body.
+   - Current environment labels: `Violla Staging` and `Violla Production`.
 
 ## Booking Flow Rules
 
