@@ -29,21 +29,25 @@ const escapeHtml = (value: string) =>
     .replaceAll(">", "&gt;");
 
 const formatTelegramMessage = (payload: BookingPayload) => {
+  const detailsText = payload.details ? ` ${escapeHtml(payload.details)}` : "";
+  const requestId = payload.requestId ? String(payload.requestId) : "";
+  const confirmUrl = payload.origin && requestId
+    ? `${payload.origin.replace(/\/$/, "")}/admin?request_id=${encodeURIComponent(requestId)}`
+    : null;
+
   const lines = [
-    "<b>Ново барање за термин</b>",
+    "🔔 <b>НОВО БАРАЊЕ!</b>",
     "",
-    `<b>Име:</b> ${escapeHtml(payload.customerName || "-")}`,
-    `<b>Телефон:</b> ${escapeHtml(payload.customerPhone || "-")}`,
-    `<b>Контакт:</b> ${escapeHtml(payload.contactLabel || "-")}`,
-    `<b>Услуга:</b> ${escapeHtml(payload.serviceMk || "-")}`,
-    `<b>Детали:</b> ${escapeHtml(payload.details || "-")}`,
-    `<b>Датум:</b> ${escapeHtml(payload.appointmentDate || "-")}`,
-    `<b>Време:</b> ${escapeHtml(payload.requestTime || "-")}`,
-    `<b>Request ID:</b> ${escapeHtml(String(payload.requestId || "-"))}`,
+    `👤 <b>Клиент:</b> ${escapeHtml(payload.customerName || "-")}`,
+    `📞 <b>Тел:</b> ${escapeHtml(payload.customerPhone || "-")}`,
+    `💬 <b>Контакт:</b> ${escapeHtml(payload.contactLabel || "-")}`,
+    `💇 <b>Услуга:</b> ${escapeHtml(payload.serviceMk || "-")}${detailsText}`,
+    `📅 <b>Датум:</b> ${escapeHtml(payload.appointmentDate || "-")}`,
+    `⏰ <b>Време:</b> ${escapeHtml(payload.requestTime || "-")}`,
   ];
 
-  if (payload.origin) {
-    lines.push(`<b>Origin:</b> ${escapeHtml(payload.origin)}`);
+  if (confirmUrl) {
+    lines.push("", `👇 <b>Кликни за потврда:</b>`, confirmUrl);
   }
 
   return lines.join("\n");
