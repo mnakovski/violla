@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
     console.error("send-telegram-booking failed", { message, payload, stack });
 
     await sendAlertEmail(
-      "[Violla Staging] send-telegram-booking failed",
+      `[${environmentLabel}] send-telegram-booking failed`,
       emailHtml({ payload, errorMessage: message, stack }),
     );
 

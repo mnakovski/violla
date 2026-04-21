@@ -121,7 +121,8 @@ const Index = () => {
 
     setIsSubmitting(true);
     try {
-      const subConfig = SERVICE_OPTIONS.find(c => c.id === formCategory)?.subServices.find(s => s.id === formService);
+      const categoryConfig = SERVICE_OPTIONS.find((c) => c.id === formCategory);
+      const subConfig = categoryConfig?.subServices.find((s) => s.id === formService);
       const contactLabel = contactMethod === "viber" ? "Viber" : contactMethod === "whatsapp" ? "WhatsApp" : "SMS";
       const notes = `[${subConfig?.label || formCategory}] (Pref: ${contactLabel})`;
 
@@ -141,7 +142,7 @@ const Index = () => {
       if (error) throw error;
 
       // 2. Server-side Telegram notification via Supabase Edge Function
-      const serviceMk = formCategory === 'hair' ? 'Коса' : formCategory === 'nails' ? 'Нокти' : formCategory === 'makeup' ? 'Шминка' : 'Депилација';
+      const serviceMk = categoryConfig?.label || formCategory;
       const details = subConfig?.label || "";
 
       try {
