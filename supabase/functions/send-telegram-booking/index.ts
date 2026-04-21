@@ -103,6 +103,10 @@ Deno.serve(async (req) => {
   try {
     payload = await req.json();
 
+    if (payload.customerName?.toLowerCase().includes("fail email test")) {
+      throw new Error("Intentional staging failure for email alert test");
+    }
+
     const botToken = requiredEnv("TELEGRAM_BOT_TOKEN");
     const chatId = requiredEnv("TELEGRAM_CHAT_ID");
     const telegramMessage = formatTelegramMessage(payload);
