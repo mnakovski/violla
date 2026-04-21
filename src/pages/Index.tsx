@@ -145,7 +145,8 @@ const Index = () => {
       const details = subConfig?.label || "";
 
       try {
-        const fnUrl = "https://suffvdkcwwpdacrxnccm.supabase.co/functions/v1/send-telegram-booking";
+        const fnBaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const fnUrl = `${fnBaseUrl}/functions/v1/send-telegram-booking`;
 
         const tgRes = await fetch(fnUrl, {
           method: "POST",
